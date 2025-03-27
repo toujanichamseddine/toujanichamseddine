@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>spring-saml-app</artifactId>
+    <version>1.0.0</version>
+    <packaging>war</packaging>
+
+    <name>Spring SAML Authentication</name>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <spring.version>5.3.30</spring.version>
+        <spring.security.version>5.7.9</spring.security.version>
+        <opensaml.version>3.4.5</opensaml.version>
+        <servlet.api.version>4.0.1</servlet.api.version>
+    </properties>
+
+    <dependencies>
+        <!-- Spring Framework -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <version>${spring.security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <version>${spring.security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+            <version>${spring.security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security.extensions</groupId>
+            <artifactId>spring-security-saml2-core</artifactId>
+            <version>1.0.10.RELEASE</version>
+        </dependency>
+
+        <!-- OpenSAML -->
+        <dependency>
+            <groupId>org.opensaml</groupId>
+            <artifactId>opensaml-core</artifactId>
+            <version>${opensaml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opensaml</groupId>
+            <artifactId>opensaml-saml-api</artifactId>
+            <version>${opensaml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opensaml</groupId>
+            <artifactId>opensaml-saml-impl</artifactId>
+            <version>${opensaml.version}</version>
+        </dependency>
+
+        <!-- Servlet API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${servlet.api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Apache Commons for XML Parsing -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.36</version>
+        </dependency>
+
+        <!-- JSTL for JSP pages -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>spring-saml-app</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
