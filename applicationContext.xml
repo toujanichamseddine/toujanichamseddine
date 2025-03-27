@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!-- Enable component scanning -->
+    <context:component-scan base-package="com.example" />
+
+    <!-- SAML Configuration -->
+    <bean id="metadataGeneratorFilter" class="org.springframework.security.saml.metadata.MetadataGeneratorFilter">
+        <constructor-arg ref="metadataGenerator"/>
+    </bean>
+
+    <bean id="metadataGenerator" class="org.springframework.security.saml.metadata.MetadataGenerator">
+        <property name="entityId" value="spring-saml-app" />
+        <property name="entityBaseURL" value="http://localhost:8080/spring-saml-app" />
+    </bean>
+
+    <bean id="samlEntryPoint" class="org.springframework.security.saml.SAMLEntryPoint">
+        <property name="defaultProfileOptions">
+            <bean class="org.springframework.security.saml.websso.WebSSOProfileOptions">
+                <property name="includeScoping" value="false"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
+        <constructor-arg>
+            <list>
+                <bean class="org.springframework.security.web.DefaultSecurityFilterChain">
+                    <constructor-arg>
+                        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+                            <constructor-arg value="/saml/**"/>
+                        </bean>
+                    </constructor-arg>
+                    <constructor-arg>
+                        <list>
+                            <bean class="org.springframework.security.saml.SAMLProcessingFilter">
+                                <property name="authenticationManager" ref="authenticationManager"/>
+                                <property name="authenticationSuccessHandler" ref="successRedirectHandler"/>
+                            </bean>
+                        </list>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="successRedirectHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler">
+        <property name="defaultTargetUrl" value="/home" />
+    </bean>
+
+    <!-- Authentication Manager -->
+    <bean id="authenticationManager" class="org.springframework.security.authentication.ProviderManager">
+        <constructor-arg>
+            <list>
+                <bean class="org.springframework.security.saml.SAMLAuthenticationProvider">
+                    <property name="userDetails" ref="samlUserDetailsService" />
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <!-- Custom User Details Service -->
+    <bean id="samlUserDetailsService" class="com.example.security.SAMLUserDetailsService"/>
+
+</beans>
