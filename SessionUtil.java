@@ -1,37 +1,28 @@
-package com.example.saml.util;
+package com.example.util;
+
+import com.example.model.SAMLUser;
 
 import javax.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SessionUtil {
 
-    /**
-     * Store user details in session.
-     */
-    public static void storeUserInSession(HttpSession session, String userId, String email, String firstName, String lastName) {
-        session.setAttribute("userId", userId);
-        session.setAttribute("email", email);
-        session.setAttribute("firstName", firstName);
-        session.setAttribute("lastName", lastName);
+    private static final String USER_SESSION_ATTRIBUTE = "user";
+
+    // ✅ Save SAMLUser to session
+    public static void saveUserToSession(HttpSession session, SAMLUser samlUser) {
+        session.setAttribute(USER_SESSION_ATTRIBUTE, samlUser);
     }
 
-    /**
-     * Retrieve user details from session.
-     */
-    public static Map<String, String> getUserFromSession(HttpSession session) {
-        Map<String, String> userDetails = new HashMap<>();
-        userDetails.put("userId", (String) session.getAttribute("userId"));
-        userDetails.put("email", (String) session.getAttribute("email"));
-        userDetails.put("firstName", (String) session.getAttribute("firstName"));
-        userDetails.put("lastName", (String) session.getAttribute("lastName"));
-
-        return userDetails;
+    // ✅ Retrieve SAMLUser from session
+    public static SAMLUser getUserFromSession(HttpSession session) {
+        Object userObj = session.getAttribute(USER_SESSION_ATTRIBUTE);
+        if (userObj instanceof SAMLUser) {
+            return (SAMLUser) userObj;
+        }
+        return null;
     }
 
-    /**
-     * Clear session data on logout.
-     */
+    // ✅ Clear session on logout
     public static void clearSession(HttpSession session) {
         session.invalidate();
     }
