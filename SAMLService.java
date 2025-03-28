@@ -1,47 +1,32 @@
-package com.example.saml.service;
+package com.example.service;
 
+import com.example.model.SAMLUser;
+import com.example.security.SAMLDetailsService;
+import com.example.util.SessionUtil;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.saml.SAMLCredential;
-import org.springframework.security.saml.SAMLAuthenticationToken;
+import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class SAMLService {
 
-    public Map<String, String> getUserDetails(HttpSession session) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    private final SAMLDetailsService samlDetailsService;
 
-        if (authentication instanceof SAMLAuthenticationToken) {
-            SAMLAuthenticationToken samlToken = (SAMLAuthenticationToken) authentication;
-            SAMLCredential credential = (SAMLCredential) samlToken.getCredentials();
+    public SAMLService(SAMLDetailsService samlDetailsService) {
+        this.samlDetailsService = samlDetailsService;
+    }
 
+    public void processSAMLAuthentication(Authentication authentication, HttpSession session) {
+        if (authentication instanceof Saml2Authentication) {
+            Saml2Authentication samlAuth = (Saml2Authentication) authentication;
+            
             // Extract user details
-            String userId = credential.getNameID().getValue();
-            String email = credential.getAttributeAsString("email");
-            String firstName = credential.getAttributeAsString("firstName");
-            String lastName = credential.getAttributeAsString("lastName");
+            SAMLUser samlUser = samlDetailsService.loadUserDetails(samlAuth);
 
-            // Store in session
-            session.setAttribute("userId", userId);
-            session.setAttribute("email", email);
-            session.setAttribute("firstName", firstName);
-            session.setAttribute("lastName", lastName);
-
-            // Prepare response map
-            Map<String, String> userDetails = new HashMap<>();
-            userDetails.put("userId", userId);
-            userDetails.put("email", email);
-            userDetails.put("firstName", firstName);
-            userDetails.put("lastName", lastName);
-
-            return userDetails;
+            // Save user details to session
+            SessionUtil.saveUserToSession(session, samlUser);
         }
-
-        return null;
     }
 }
