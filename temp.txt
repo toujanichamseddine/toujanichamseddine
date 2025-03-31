@@ -1,52 +1,51 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+🔍 1. Check if Node.js Version is Supported
+Make sure you are using a valid and installed version of Node.js:
 
-    <artifactId>frontend</artifactId>
-    <packaging>pom</packaging>
+sh
+Copier
+Modifier
+node -v
+If not installed, install Node.js 18.x or LTS version:
 
-    <build>
-        <plugins>
-            <!-- Plugin to run npm commands -->
-            <plugin>
-                <groupId>com.github.eirslett</groupId>
-                <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.12.0</version>
+sh
+Copier
+Modifier
+npm install -g n
+n 18
+🛠 2. Run Maven with Debugging
+Try running Maven with debugging enabled to see detailed errors:
 
-                <executions>
-                    <!-- Ensure Node and NPM are installed -->
-                    <execution>
-                        <id>install-node-and-npm</id>
-                        <goals>
-                            <goal>install-node-and-npm</goal>
-                        </goals>
-                    </execution>
+sh
+Copier
+Modifier
+mvn clean install -X
+🚀 3. Verify Plugin Version
+Make sure you are using frontend-maven-plugin 1.12.0 or newer. If necessary, update it in your pom.xml:
 
-                    <!-- Install dependencies -->
-                    <execution>
-                        <id>npm-install</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                        </configuration>
-                    </execution>
+xml
+Copier
+Modifier
+<dependency>
+    <groupId>com.github.eirslett</groupId>
+    <artifactId>frontend-maven-plugin</artifactId>
+    <version>1.12.0</version>
+</dependency>
+🛠 4. Manually Install Node.js in .m2
+If Maven still fails, you can manually install Node.js where Maven expects it:
 
-                    <!-- Start Angular app -->
-                    <execution>
-                        <id>npm-start</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <phase>compile</phase>
-                        <configuration>
-                            <arguments>start</arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+sh
+Copier
+Modifier
+mkdir -p ~/.m2/repository/com/github/eirslett/node
+cd ~/.m2/repository/com/github/eirslett/node
+wget https://nodejs.org/dist/v18.17.0/node-v18.17.0-linux-x64.tar.gz
+tar -xvzf node-v18.17.0-linux-x64.tar.gz
+Then update pom.xml to point to this directory.
+
+🎯 Final Step: Run Maven Again
+sh
+Copier
+Modifier
+mvn clean install
+This should now work without errors. 🚀
+Let me know if you need more debugging! 😊
