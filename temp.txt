@@ -1,120 +1,3 @@
-give an example of login html with bootsrap using the /login webservice from the backend saml project
-
-
-ChatGPT a dit :
-Here’s a Bootstrap-styled login page that integrates with your SAML-based /login web service from your backend.
-
-✅ Login Page (login.component.html)
-html
-Copier
-Modifier
-<div class="container d-flex justify-content-center align-items-center vh-100">
-  <div class="card shadow-lg p-4" style="width: 400px;">
-    <h3 class="text-center text-primary">Login</h3>
-    
-    <form (submit)="onSubmit()">
-      <!-- Username -->
-      <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
-        <input type="text" class="form-control" id="username" [(ngModel)]="username" required>
-      </div>
-
-      <!-- Password -->
-      <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input type="password" class="form-control" id="password" [(ngModel)]="password" required>
-      </div>
-
-      <!-- Submit Button -->
-      <button type="submit" class="btn btn-primary w-100">
-        Login
-      </button>
-    </form>
-
-    <!-- Error Message -->
-    <div *ngIf="errorMessage" class="alert alert-danger mt-3">
-      {{ errorMessage }}
-    </div>
-  </div>
-</div>
-✅ Login Component (login.component.ts)
-typescript
-Copier
-Modifier
-import { Component } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
-
-@Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
-})
-export class LoginComponent {
-  username: string = '';
-  password: string = '';
-  errorMessage: string = '';
-
-  constructor(private http: HttpClient, private router: Router) {}
-
-  onSubmit() {
-    const credentials = { username: this.username, password: this.password };
-
-    this.http.post('/login', credentials, { withCredentials: true }).subscribe({
-      next: (response) => {
-        console.log('Login successful:', response);
-        sessionStorage.setItem('user', JSON.stringify(response)); // Store user session
-        this.router.navigate(['/home']); // Redirect to home
-      },
-      error: (error) => {
-        console.error('Login error:', error);
-        this.errorMessage = 'Invalid username or password';
-      }
-    });
-  }
-}
-✅ Backend Integration (Spring Security SAML /login)
-Make sure your Spring backend is correctly handling SAML authentication on /login. Example:
-
-java
-Copier
-Modifier
-@PostMapping("/login")
-public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-    Authentication auth = authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-
-    SecurityContextHolder.getContext().setAuthentication(auth);
-
-    return ResponseEntity.ok(new UserResponse(auth.getName(), "Login successful"));
-}
-✅ Angular HTTP Interceptor (Optional)
-If you need to send credentials in every request, create an interceptor:
-
-typescript
-Copier
-Modifier
-import { HttpInterceptor, HttpRequest, HttpHandler } from '@angular/common/http';
-
-export class AuthInterceptor implements HttpInterceptor {
-  intercept(req: HttpRequest<any>, next: HttpHandler) {
-    const user = sessionStorage.getItem('user');
-    if (user) {
-      req = req.clone({ withCredentials: true });
-    }
-    return next.handle(req);
-  }
-}
-🚀 Now, your Angular login page should work with the backend!
-Let me know if you need any changes or improvements! 😊
-
-
-
-
-
-
-
-Vous avez dit :
 also the angular component and the service
 
 
@@ -263,3 +146,213 @@ export const routes: Routes = [
 4️⃣ Unauthenticated users are redirected to /login when trying to access protected routes.
 
 Let me know if you need more improvements! 😊
+
+
+
+
+
+
+
+Vous avez dit :
+in angular separate the component and the service in differents files
+
+
+ChatGPT a dit :
+Sure! Below is the Angular login system with the component and service in separate files.
+
+✅ 1. Login Component (login.component.ts)
+This is responsible for handling the user interface and calling the authentication service.
+
+typescript
+Copier
+Modifier
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  username: string = '';
+  password: string = '';
+  errorMessage: string = '';
+
+  constructor(private authService: AuthService, private router: Router) {}
+
+  onSubmit() {
+    this.authService.login(this.username, this.password).subscribe({
+      next: (response) => {
+        console.log('Login successful:', response);
+        sessionStorage.setItem('user', JSON.stringify(response)); // Store user session
+        this.router.navigate(['/home']); // Redirect to home page
+      },
+      error: (error) => {
+        console.error('Login error:', error);
+        this.errorMessage = 'Invalid username or password';
+      }
+    });
+  }
+}
+✅ 2. Login UI (login.component.html)
+A Bootstrap-styled login form.
+
+html
+Copier
+Modifier
+<div class="container d-flex justify-content-center align-items-center vh-100">
+  <div class="card shadow-lg p-4" style="width: 400px;">
+    <h3 class="text-center text-primary">Login</h3>
+    
+    <form (submit)="onSubmit()">
+      <!-- Username -->
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" [(ngModel)]="username" required>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" [(ngModel)]="password" required>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary w-100">Login</button>
+    </form>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-danger mt-3">
+      {{ errorMessage }}
+    </div>
+  </div>
+</div>
+✅ 3. Authentication Service (auth.service.ts)
+Handles API calls for authentication.
+
+typescript
+Copier
+Modifier
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+  private loginUrl = '/login'; // Backend login endpoint
+
+  constructor(private http: HttpClient) {}
+
+  login(username: string, password: string): Observable<any> {
+    const credentials = { username, password };
+    return this.http.post(this.loginUrl, credentials, { withCredentials: true });
+  }
+
+  logout() {
+    sessionStorage.removeItem('user'); // Remove user session
+  }
+
+  isLoggedIn(): boolean {
+    return sessionStorage.getItem('user') !== null;
+  }
+}
+✅ 4. Protect Routes with Auth Guard (auth.guard.ts)
+Restricts access to protected pages.
+
+typescript
+Copier
+Modifier
+import { Injectable } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { AuthService } from './auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthGuard implements CanActivate {
+  constructor(private authService: AuthService, private router: Router) {}
+
+  canActivate(): boolean {
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']); // Redirect to login if not logged in
+      return false;
+    }
+    return true;
+  }
+}
+✅ 5. Configure Routes (app.routes.ts)
+Defines the application's routes.
+
+typescript
+Copier
+Modifier
+import { Routes } from '@angular/router';
+import { LoginComponent } from './login/login.component';
+import { HomeComponent } from './home/home.component';
+import { AuthGuard } from './services/auth.guard';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] }, // Protected route
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '**', redirectTo: 'login' }
+];
+✅ 6. Update app.module.ts
+Make sure HttpClientModule and FormsModule are imported.
+
+typescript
+Copier
+Modifier
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './login/login.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    HttpClientModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+🚀 Final Steps
+1️⃣ Install Bootstrap (if not installed)
+
+sh
+Copier
+Modifier
+npm install bootstrap @popperjs/core
+Then, add Bootstrap in angular.json:
+
+json
+Copier
+Modifier
+"styles": [
+  "node_modules/bootstrap/dist/css/bootstrap.min.css"
+],
+"scripts": [
+  "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+]
+2️⃣ Restart Angular
+
+sh
+Copier
+Modifier
+ng serve
+3️⃣ Now your Angular login page works with authentication! 🎯
+Let me know if you need further improvements. 😊
