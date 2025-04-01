@@ -1,51 +1,265 @@
-🔍 1. Check if Node.js Version is Supported
-Make sure you are using a valid and installed version of Node.js:
+give an example of login html with bootsrap using the /login webservice from the backend saml project
 
-sh
+
+ChatGPT a dit :
+Here’s a Bootstrap-styled login page that integrates with your SAML-based /login web service from your backend.
+
+✅ Login Page (login.component.html)
+html
 Copier
 Modifier
-node -v
-If not installed, install Node.js 18.x or LTS version:
+<div class="container d-flex justify-content-center align-items-center vh-100">
+  <div class="card shadow-lg p-4" style="width: 400px;">
+    <h3 class="text-center text-primary">Login</h3>
+    
+    <form (submit)="onSubmit()">
+      <!-- Username -->
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" [(ngModel)]="username" required>
+      </div>
 
-sh
+      <!-- Password -->
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" [(ngModel)]="password" required>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary w-100">
+        Login
+      </button>
+    </form>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-danger mt-3">
+      {{ errorMessage }}
+    </div>
+  </div>
+</div>
+✅ Login Component (login.component.ts)
+typescript
 Copier
 Modifier
-npm install -g n
-n 18
-🛠 2. Run Maven with Debugging
-Try running Maven with debugging enabled to see detailed errors:
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
-sh
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  username: string = '';
+  password: string = '';
+  errorMessage: string = '';
+
+  constructor(private http: HttpClient, private router: Router) {}
+
+  onSubmit() {
+    const credentials = { username: this.username, password: this.password };
+
+    this.http.post('/login', credentials, { withCredentials: true }).subscribe({
+      next: (response) => {
+        console.log('Login successful:', response);
+        sessionStorage.setItem('user', JSON.stringify(response)); // Store user session
+        this.router.navigate(['/home']); // Redirect to home
+      },
+      error: (error) => {
+        console.error('Login error:', error);
+        this.errorMessage = 'Invalid username or password';
+      }
+    });
+  }
+}
+✅ Backend Integration (Spring Security SAML /login)
+Make sure your Spring backend is correctly handling SAML authentication on /login. Example:
+
+java
 Copier
 Modifier
-mvn clean install -X
-🚀 3. Verify Plugin Version
-Make sure you are using frontend-maven-plugin 1.12.0 or newer. If necessary, update it in your pom.xml:
+@PostMapping("/login")
+public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+    Authentication auth = authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-xml
+    SecurityContextHolder.getContext().setAuthentication(auth);
+
+    return ResponseEntity.ok(new UserResponse(auth.getName(), "Login successful"));
+}
+✅ Angular HTTP Interceptor (Optional)
+If you need to send credentials in every request, create an interceptor:
+
+typescript
 Copier
 Modifier
-<dependency>
-    <groupId>com.github.eirslett</groupId>
-    <artifactId>frontend-maven-plugin</artifactId>
-    <version>1.12.0</version>
-</dependency>
-🛠 4. Manually Install Node.js in .m2
-If Maven still fails, you can manually install Node.js where Maven expects it:
+import { HttpInterceptor, HttpRequest, HttpHandler } from '@angular/common/http';
 
-sh
+export class AuthInterceptor implements HttpInterceptor {
+  intercept(req: HttpRequest<any>, next: HttpHandler) {
+    const user = sessionStorage.getItem('user');
+    if (user) {
+      req = req.clone({ withCredentials: true });
+    }
+    return next.handle(req);
+  }
+}
+🚀 Now, your Angular login page should work with the backend!
+Let me know if you need any changes or improvements! 😊
+
+
+
+
+
+
+
+Vous avez dit :
+also the angular component and the service
+
+
+ChatGPT a dit :
+Sure! Below is the complete Angular login component and service that integrates with your SAML backend /login endpoint.
+
+✅ 1. Login Component (login.component.ts)
+typescript
 Copier
 Modifier
-mkdir -p ~/.m2/repository/com/github/eirslett/node
-cd ~/.m2/repository/com/github/eirslett/node
-wget https://nodejs.org/dist/v18.17.0/node-v18.17.0-linux-x64.tar.gz
-tar -xvzf node-v18.17.0-linux-x64.tar.gz
-Then update pom.xml to point to this directory.
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
-🎯 Final Step: Run Maven Again
-sh
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  username: string = '';
+  password: string = '';
+  errorMessage: string = '';
+
+  constructor(private authService: AuthService, private router: Router) {}
+
+  onSubmit() {
+    this.authService.login(this.username, this.password).subscribe({
+      next: (response) => {
+        console.log('Login successful:', response);
+        sessionStorage.setItem('user', JSON.stringify(response)); // Store user session
+        this.router.navigate(['/home']); // Redirect to home page
+      },
+      error: (error) => {
+        console.error('Login error:', error);
+        this.errorMessage = 'Invalid username or password';
+      }
+    });
+  }
+}
+✅ 2. Auth Service (auth.service.ts)
+This service handles authentication and interacts with the backend.
+
+typescript
 Copier
 Modifier
-mvn clean install
-This should now work without errors. 🚀
-Let me know if you need more debugging! 😊
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+  private loginUrl = '/login'; // Backend login endpoint
+
+  constructor(private http: HttpClient) {}
+
+  login(username: string, password: string): Observable<any> {
+    const credentials = { username, password };
+    return this.http.post(this.loginUrl, credentials, { withCredentials: true });
+  }
+
+  logout() {
+    sessionStorage.removeItem('user'); // Remove user session
+  }
+
+  isLoggedIn(): boolean {
+    return sessionStorage.getItem('user') !== null;
+  }
+}
+✅ 3. Update app.module.ts
+Ensure HttpClientModule is imported.
+
+typescript
+Copier
+Modifier
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './login/login.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    HttpClientModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+✅ 4. Protect Routes with Auth Guard (auth.guard.ts)
+To restrict access to pages if the user is not logged in, create an AuthGuard.
+
+typescript
+Copier
+Modifier
+import { Injectable } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { AuthService } from './auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthGuard implements CanActivate {
+  constructor(private authService: AuthService, private router: Router) {}
+
+  canActivate(): boolean {
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']); // Redirect to login if not logged in
+      return false;
+    }
+    return true;
+  }
+}
+✅ 5. Secure Routes (app.routes.ts)
+Modify the routes to protect the home page.
+
+typescript
+Copier
+Modifier
+import { Routes } from '@angular/router';
+import { LoginComponent } from './login/login.component';
+import { HomeComponent } from './home/home.component';
+import { AuthGuard } from './services/auth.guard';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] }, // Protected route
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '**', redirectTo: 'login' }
+];
+🚀 Now Your Angular Login Works with SAML Authentication!
+1️⃣ User enters credentials and submits.
+2️⃣ The app sends a request to /login.
+3️⃣ If successful, the user is redirected to /home.
+4️⃣ Unauthenticated users are redirected to /login when trying to access protected routes.
+
+Let me know if you need more improvements! 😊
