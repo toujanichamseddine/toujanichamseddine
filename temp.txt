@@ -1,106 +1,14 @@
-Great! Since you have app.config.ts, you need to ensure that your LoginComponent and other necessary modules are properly registered in it.
+import { Injectable, inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from './auth.service';
 
-✅ Solution: Update app.config.ts
-Modify your app.config.ts to properly include the necessary providers and routing.
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
 
-📌 Example app.config.ts
-typescript
-Copier
-Modifier
-import { ApplicationConfig } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { routes } from './app.routes';
-import { provideHttpClient } from '@angular/common/http';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideRouter(routes),   // ✅ Provide routing
-    provideHttpClient()      // ✅ Provide HTTP Client
-  ]
-};
-✅ Ensure LoginComponent is Standalone
-Since Angular 17 uses the Standalone API, each component must be explicitly marked as standalone: true.
-
-📌 Modify login.component.ts
-typescript
-Copier
-Modifier
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { AuthService } from '../services/auth.service';
-
-@Component({
-  selector: 'app-login',
-  standalone: true, // ✅ Required in Angular 17
-  imports: [CommonModule, FormsModule], // ✅ Import necessary modules
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
-})
-export class LoginComponent {
-  username: string = '';
-  password: string = '';
-  errorMessage: string = '';
-
-  constructor(private authService: AuthService, private router: Router) {}
-
-  onSubmit() {
-    this.authService.login(this.username, this.password).subscribe({
-      next: (response) => {
-        console.log('Login successful:', response);
-        sessionStorage.setItem('user', JSON.stringify(response));
-        this.router.navigate(['/home']);
-      },
-      error: (error) => {
-        console.error('Login error:', error);
-        this.errorMessage = 'Invalid username or password';
-      }
-    });
+  if (!authService.isLoggedIn()) {
+    router.navigate(['/login']); // Redirect to login if not authenticated
+    return false;
   }
-}
-✅ Ensure Routing is Correct
-Check that app.routes.ts includes the LoginComponent.
-
-📌 Example app.routes.ts
-typescript
-Copier
-Modifier
-import { Routes } from '@angular/router';
-import { LoginComponent } from './login/login.component';
-import { HomeComponent } from './home/home.component';
-import { AuthGuard } from './services/auth.guard';
-
-export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: '**', redirectTo: 'login' }
-];
-✅ Ensure Bootstrap Configuration
-Since you're using Bootstrap, make sure it's installed and added in angular.json.
-
-sh
-Copier
-Modifier
-npm install bootstrap @popperjs/core
-Then, add it to angular.json:
-
-json
-Copier
-Modifier
-"styles": [
-  "node_modules/bootstrap/dist/css/bootstrap.min.css"
-],
-"scripts": [
-  "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
-]
-✅ Restart the Angular App
-After making these changes, restart your Angular project:
-
-sh
-Copier
-Modifier
-ng serve
-🎯 Your LoginComponent should now work properly with Angular 17!
-Let me know if you have any issues. 🚀😊
+  return true;
+};
