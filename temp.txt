@@ -1,15 +1,40 @@
-protected void configure(HttpSecurity http) throws Exception {
-        http
-            .authorizeRequests()
-                .antMatchers("/login").permitAll()
-                .anyRequest().authenticated()
-            .and()
-            .formLogin()
-                .loginPage("/login")
-                .permitAll()
-            .and()
-            .logout()
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout")
-                .permitAll();
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        // Disable CSRF if you are using token-based authentication
+        http.csrf().disable() // Optional: Disable CSRF for APIs or if you're using JWTs, etc.
+
+        // Define URL authorization rules
+        .authorizeRequests()
+            .antMatchers("/login", "/register").permitAll() // Allow login and register pages to be public
+            .anyRequest().authenticated() // All other requests require authentication
+        .and()
+        
+        // Configure form-based login
+        .formLogin()
+            .loginPage("/login") // Custom login page URL
+            .loginProcessingUrl("/login") // The URL where the login form submits
+            .defaultSuccessUrl("/home", true) // Redirect to /home after successful login
+            .permitAll() // Allow all users to access the login page
+        .and()
+        
+        // Configure logout functionality
+        .logout()
+            .logoutUrl("/logout") // The URL for logging out
+            .logoutSuccessUrl("/login?logout") // Redirect to login page after logout
+            .permitAll() // Allow all users to access the logout URL
+        .and()
+        
+        // Optionally, you can add a filter for custom security logic (like JWT authentication or custom filters)
+        .addFilterBefore(new CustomAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // Optional
     }
+}
