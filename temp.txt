@@ -1,90 +1,111 @@
-The error you're seeing (sessionStorage is not defined) is likely caused by the fact that sessionStorage is not available in server-side rendering (SSR) or if you're running your Angular app in an environment where the window or sessionStorage API is not available, such as during testing or in a non-browser context.
+1. Fix login() in auth.service.ts
+Modify your AuthService to call the backend SAML authentication endpoint.
 
-To resolve this, you need to ensure that you're using sessionStorage only in the browser environment. Here's how you can fix the issue:
-
-1. Check if sessionStorage is Available Before Using It
-In Angular, you can check if sessionStorage is available by checking if window is defined. This will prevent errors in environments where sessionStorage is unavailable (such as server-side rendering or testing).
-
-Modify auth.service.ts:
+✅ Corrected auth.service.ts
 typescript
 Copier
 Modifier
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { ConfigService } from './config.service';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private backendUrl: string = '';
 
-  // Check if we are in the browser
-  private isBrowser(): boolean {
-    return typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+  constructor(private http: HttpClient, private configService: ConfigService, private router: Router) {
+    this.configService.loadConfig().subscribe(config => {
+      this.backendUrl = `http://${config.backend.host}:${config.backend.port}`;
+    });
   }
 
-  // Check if user is logged in by checking sessionStorage
+  // Call backend SAML authentication API
+  login(): Observable<any> {
+    return this.http.get(`${this.backendUrl}/saml/login`, { withCredentials: true });
+  }
+
+  // Check if user is logged in
   isLoggedIn(): boolean {
-    if (this.isBrowser()) {
-      return !!sessionStorage.getItem('user'); // Replace 'user' with the key you use in sessionStorage
-    }
-    return false;
+    return typeof window !== 'undefined' && sessionStorage.getItem('user') !== null;
   }
 
-  // Add other methods that interact with sessionStorage, ensuring isBrowser() is checked
-}
-2. Modify auth.guard.ts to Safely Use sessionStorage
-In the auth.guard.ts, when checking if a user is logged in, make sure that you are doing it in the browser context.
+  // Store user session after login
+  storeUserSession(userData: any): void {
+    sessionStorage.setItem('user', JSON.stringify(userData));
+  }
 
-Modify auth.guard.ts:
+  // Logout function
+  logout(): void {
+    sessionStorage.removeItem('user');
+    this.router.navigate(['/login']);
+  }
+}
+2. Call the login() Function from LoginComponent
+Modify your login.component.ts file to properly call the backend and store user session.
+
+✅ Corrected login.component.ts
 typescript
 Copier
 Modifier
-import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { AuthService } from './auth.service';
+import { Component } from '@angular/core';
+import { AuthService } from '../services/auth.service';
+import { Router } from '@angular/router';
 
-@Injectable({
-  providedIn: 'root'
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css'],
+  imports: [ /* Import necessary Angular modules */ ]
 })
-export class AuthGuard implements CanActivate {
+export class LoginComponent {
 
   constructor(private authService: AuthService, private router: Router) {}
 
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
-    // Check if the user is logged in
-    if (this.authService.isLoggedIn()) {
-      return true;
-    } else {
-      // Redirect to login page if not logged in
-      this.router.navigate(['/login']);
-      return false;
-    }
+  login() {
+    this.authService.login().subscribe({
+      next: (response) => {
+        this.authService.storeUserSession(response);
+        this.router.navigate(['/home']); // Redirect to home after login
+      },
+      error: (err) => {
+        console.error('Login failed:', err);
+      }
+    });
   }
 }
-3. Ensure You Are Using sessionStorage Correctly
-Make sure that you're using sessionStorage only in the appropriate lifecycle hooks (e.g., after the browser is ready). Avoid using sessionStorage in constructors or other places where the context may not be fully initialized, like during Angular’s server-side rendering phase.
+3. Update config.json for Backend URL
+Ensure your config.json file contains the backend host and port:
 
-4. Use Angular Universal (if SSR is involved)
-If you're using Angular Universal for server-side rendering (SSR), you should ensure that the code using sessionStorage is only executed in the browser.
-
-In this case, modify the usage of sessionStorage like this:
-
-typescript
+✅ src/assets/config.json
+json
 Copier
 Modifier
-// Check if we are running in the browser
-const isBrowser = typeof window !== 'undefined';
-
-if (isBrowser) {
-  sessionStorage.setItem('user', JSON.stringify(userData)); // Example usage
+{
+  "backend": {
+    "host": "localhost",
+    "port": 8080
+  }
 }
-This prevents errors in SSR environments where window and sessionStorage might not be defined.
+4. How the Flow Works Now
+User clicks "Login" in the frontend.
 
-Summary:
-Check for browser environment: Before using sessionStorage, ensure you're in a browser environment using typeof window !== 'undefined'.
+Angular calls the backend SAML login API (http://localhost:8080/saml/login).
 
-Handle SSR scenarios: If using Angular Universal or SSR, make sure sessionStorage is only used in the client-side context.
+Backend handles authentication and returns user session data.
 
-Let me know if you need more help with this!
+User session is stored in sessionStorage.
+
+User is redirected to /home where session info is displayed.
+
+Why This Fix Works
+✅ Calls the Backend Instead of Navigating to /login on the Frontend
+✅ Uses ConfigService for Dynamic Backend URL
+✅ Stores User Session Securely in sessionStorage
+✅ Redirects to /home After Successful Login
+
+Let me know if you need further improvements! 🚀
