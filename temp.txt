@@ -1,28 +1,15 @@
-import net.shibboleth.utilities.java.support.xml.BasicParserPool;
-import org.opensaml.core.config.InitializationService;
-import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
-
-import net.shibboleth.utilities.java.support.xml.BasicParserPool;
-import org.opensaml.core.config.InitializationService;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
-public class SAMLParserConfig {
-
-    @Bean
-    public BasicParserPool parserPool() {
-        try {
-            // Initialize OpenSAML
-            InitializationService.initialize();
-
-            BasicParserPool pool = new BasicParserPool();
-            pool.setMaxPoolSize(50);
-            pool.initialize();
-
-            return pool;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize OpenSAML parser pool", e);
-        }
+protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                .antMatchers("/login").permitAll()
+                .anyRequest().authenticated()
+            .and()
+            .formLogin()
+                .loginPage("/login")
+                .permitAll()
+            .and()
+            .logout()
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout")
+                .permitAll();
     }
-}
