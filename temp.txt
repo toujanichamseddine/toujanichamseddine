@@ -1,34 +1,8 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-  private loginUrl = '/login'; // Backend login URL
-
-  constructor(private http: HttpClient) {}
-
-  login(username: string, password: string): Observable<any> {
-    const credentials = { username, password };
-    return this.http.post(this.loginUrl, credentials, { withCredentials: true });
-  }
-
-  logout() {
-    sessionStorage.removeItem('user'); // ✅ Remove user session
-  }
-
-  isLoggedIn(): boolean {
-    return sessionStorage.getItem('user') !== null; // ✅ Check if user session exists
-  }
-}
-
-
-
-"styles": [
-  "node_modules/bootstrap/dist/css/bootstrap.min.css"
-],
-"scripts": [
-  "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
-]
+@Bean
+    public VelocityEngine velocityEngine() {
+        VelocityEngine velocityEngine = new VelocityEngine();
+        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADERS, "classpath");
+        velocityEngine.setProperty("resource.loader.classpath.class", ClasspathResourceLoader.class.getName());
+        velocityEngine.init();
+        return velocityEngine;
+    }
