@@ -1,40 +1,21 @@
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+@GetMapping("/saml/consume")
+    public String handleSamlResponse(Authentication authentication) {
+        // Get the credentials from the authentication object
+        Object credentials = authentication.getCredentials();
 
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+        // Ensure it's an instance of SAMLCredential
+        if (credentials instanceof SAMLCredential) {
+            SAMLCredential samlCredential = (SAMLCredential) credentials;
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        // Disable CSRF if you are using token-based authentication
-        http.csrf().disable() // Optional: Disable CSRF for APIs or if you're using JWTs, etc.
+            // Process the SAML credential
+            String userName = samlCredential.getNameID().getValue();
+            // Process other parts of the credential if needed
+            // Example: Get the assertion, attributes, etc.
 
-        // Define URL authorization rules
-        .authorizeRequests()
-            .antMatchers("/login", "/register").permitAll() // Allow login and register pages to be public
-            .anyRequest().authenticated() // All other requests require authentication
-        .and()
-        
-        // Configure form-based login
-        .formLogin()
-            .loginPage("/login") // Custom login page URL
-            .loginProcessingUrl("/login") // The URL where the login form submits
-            .defaultSuccessUrl("/home", true) // Redirect to /home after successful login
-            .permitAll() // Allow all users to access the login page
-        .and()
-        
-        // Configure logout functionality
-        .logout()
-            .logoutUrl("/logout") // The URL for logging out
-            .logoutSuccessUrl("/login?logout") // Redirect to login page after logout
-            .permitAll() // Allow all users to access the logout URL
-        .and()
-        
-        // Optionally, you can add a filter for custom security logic (like JWT authentication or custom filters)
-        .addFilterBefore(new CustomAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // Optional
+            System.out.println("SAML Authentication Successful for: " + userName);
+        } else {
+            throw new IllegalArgumentException("Expected SAMLCredential, but got: " + credentials.getClass().getName());
+        }
+
+        return "home";
     }
-}
