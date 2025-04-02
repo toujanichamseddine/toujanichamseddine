@@ -1,5 +1,28 @@
- VelocityEngine velocityEngine = new VelocityEngine();
-    velocityEngine.setProperty("resource.loaders", "classpath");
-    velocityEngine.setProperty("resource.loader.classpath.class", ClasspathResourceLoader.class.getName());
-    velocityEngine.init();
-    return velocityEngine;
+import net.shibboleth.utilities.java.support.xml.BasicParserPool;
+import org.opensaml.core.config.InitializationService;
+import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
+
+import net.shibboleth.utilities.java.support.xml.BasicParserPool;
+import org.opensaml.core.config.InitializationService;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class SAMLParserConfig {
+
+    @Bean
+    public BasicParserPool parserPool() {
+        try {
+            // Initialize OpenSAML
+            InitializationService.initialize();
+
+            BasicParserPool pool = new BasicParserPool();
+            pool.setMaxPoolSize(50);
+            pool.initialize();
+
+            return pool;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize OpenSAML parser pool", e);
+        }
+    }
+}
