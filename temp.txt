@@ -1,70 +1,74 @@
-<bean id="parserPool" class="org.springframework.security.saml.parser.ParserPoolHolder"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans.xsd 
+       http://www.springframework.org/schema/security 
+       http://www.springframework.org/schema/security/spring-security.xsd">
 
-<!-- Metadata Manager -->
-<bean id="metadata" class="org.springframework.security.saml.metadata.CachingMetadataManager">
-    <constructor-arg>
-        <list>
-            <!-- Load Service Provider Metadata from File -->
-            <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
-                <constructor-arg>
-                    <bean class="org.springframework.security.saml.metadata.FilesystemMetadataProvider">
-                        <constructor-arg>
-                            <value>classpath:saml/sp-metadata.xml</value>
-                        </constructor-arg>
-                    </bean>
-                </constructor-arg>
-                <constructor-arg>
-                    <bean class="org.springframework.security.saml.metadata.ExtendedMetadata">
-                        <property name="signMetadata" value="true"/>
-                        <property name="requireLogoutRequestSigned" value="false"/>
-                    </bean>
-                </constructor-arg>
+    <security:http pattern="/saml/**" security="none"/>
+    <security:http use-expressions="true" entry-point-ref="samlEntryPoint">
+        <security:csrf disabled="true"/>
+        <security:custom-filter before="FIRST" ref="metadataGeneratorFilter"/>
+        <security:custom-filter after="BASIC_AUTH_FILTER" ref="samlFilter"/>
+    </security:http>
+
+    <bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
+        <constructor-arg>
+            <list>
+                <security:filter-chain pattern="/saml/login/**" filters="samlEntryPoint"/>
+                <security:filter-chain pattern="/saml/logout/**" filters="samlLogoutFilter"/>
+                <security:filter-chain pattern="/saml/metadata/**" filters="metadataDisplayFilter"/>
+                <security:filter-chain pattern="/saml/SSO/**" filters="samlWebSSOProcessingFilter"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="samlEntryPoint" class="org.springframework.security.saml.SAMLEntryPoint">
+        <property name="defaultProfileOptions">
+            <bean class="org.springframework.security.saml.websso.WebSSOProfileOptions">
+                <property name="binding" value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"/>
+                <property name="includeScoping" value="false"/>
             </bean>
-        </list>
-    </constructor-arg>
-</bean>
+        </property>
+    </bean>
 
-<!-- SAML Authentication Provider -->
-<bean id="samlAuthenticationProvider" class="org.springframework.security.saml.SAMLAuthenticationProvider">
-    <property name="userDetails" ref="samlUserDetailsService"/>
-    <property name="forcePrincipalAsString" value="false"/>
-</bean>
-
-<!-- Authentication Manager -->
-<bean id="authenticationManager" class="org.springframework.security.authentication.ProviderManager">
-    <constructor-arg>
-        <list>
-            <ref bean="samlAuthenticationProvider"/>
-        </list>
-    </constructor-arg>
-</bean>
-
-<!-- Security Filter Chain -->
-<http>
-    <intercept-url pattern="/saml/**" access="permitAll"/>
-    <intercept-url pattern="/**" access="isAuthenticated()"/>
-    <logout logout-url="/saml/logout" logout-success-url="/login?logout"/>
-    <custom-filter ref="samlFilter" after="EXCEPTION_TRANSLATION_FILTER"/>
-</http>
-
-<!-- SAML Filter -->
-<bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
-    <constructor-arg>
-        <list>
-            <bean class="org.springframework.security.web.DefaultSecurityFilterChain">
-                <constructor-arg>
-                    <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                        <constructor-arg value="/saml/consume"/>
-                    </bean>
-                </constructor-arg>
-                <constructor-arg>
-                    <list>
-                        <bean class="org.springframework.security.saml.SAMLProcessingFilter">
-                            <property name="authenticationManager" ref="authenticationManager"/>
+    <!-- IDP Metadata configuration -->
+    <bean id="metadata" class="org.springframework.security.saml.metadata.CachingMetadataManager">
+        <constructor-arg>
+            <list>
+                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
+                    <constructor-arg>
+                        <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider">
+                            <constructor-arg>
+                                <value type="java.io.File">classpath:idp-metadata.xml</value>
+                            </constructor-arg>
+                            <property name="parserPool" ref="parserPool"/>
                         </bean>
-                    </list>
-                </constructor-arg>
+                    </constructor-arg>
+                    <constructor-arg>
+                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata"/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <!-- SP Metadata generation -->
+    <bean id="metadataGeneratorFilter" class="org.springframework.security.saml.metadata.MetadataGeneratorFilter">
+        <constructor-arg>
+            <bean class="org.springframework.security.saml.metadata.MetadataGenerator">
+                <property name="entityId" value="urn:example:sp"/>
+                <property name="extendedMetadata">
+                    <bean class="org.springframework.security.saml.metadata.ExtendedMetadata">
+                        <property name="signMetadata" value="false"/>
+                        <property name="idpDiscoveryEnabled" value="false"/>
+                    </bean>
+                </property>
             </bean>
-        </list>
-    </constructor-arg>
-</bean>
+        </constructor-arg>
+    </bean>
+
+    <!-- Other necessary beans (parserPool, keyManager, etc.) -->
+</beans>
