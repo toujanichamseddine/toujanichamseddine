@@ -1,35 +1,17 @@
-package com.example.service;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.example.model.SamlUserDetails;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.saml.SAMLCredential;
-import org.springframework.security.saml.userdetails.SAMLUserDetailsService;
-import org.springframework.stereotype.Service;
+@RestController
+public class UserController {
+    
+    @GetMapping("/login")
+    public String login() {
+        return "Initiate SAML flow via /saml/login";
+    }
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Service
-public class SamlUserDetailsServiceImpl implements SAMLUserDetailsService {
-
-    @Override
-    public Object loadUserBySAML(SAMLCredential credential) {
-        
-        // Extract SAML attributes
-        String username = credential.getNameID().getValue();
-        String email = credential.getAttributeAsString("email");
-        String displayName = credential.getAttributeAsString("displayName");
-
-        // Create authorities (adjust based on your requirements)
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-
-        return new SamlUserDetails(
-            username, 
-            email, 
-            displayName, 
-            authorities
-        );
+    @GetMapping("/userInfos")
+    public Object userInfos(Authentication authentication) {
+        return authentication.getPrincipal();
     }
 }
