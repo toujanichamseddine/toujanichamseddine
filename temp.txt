@@ -1,17 +1,105 @@
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+To modify your Maven frontend plugin configuration so that it only runs npm install and then builds the Angular project for deployment on WildFly, follow these steps:
 
-@RestController
-public class UserController {
-    
-    @GetMapping("/login")
-    public String login() {
-        return "Initiate SAML flow via /saml/login";
-    }
+1. Update pom.xml Configuration
+Modify the frontend-maven-plugin section in your pom.xml to:
 
-    @GetMapping("/userInfos")
-    public Object userInfos(Authentication authentication) {
-        return authentication.getPrincipal();
-    }
-}
+Run npm install (to install dependencies).
+
+Run ng build --output-path=target/webapp (or another suitable output directory) to generate the production build.
+
+Remove npm start (which is for development mode).
+
+Updated Configuration
+xml
+Copier
+Modifier
+<plugin>
+    <groupId>com.github.eirslett</groupId>
+    <artifactId>frontend-maven-plugin</artifactId>
+    <version>1.12.1</version>
+
+    <executions>
+        <!-- Step 1: Install Node and npm -->
+        <execution>
+            <id>install-node-and-npm</id>
+            <goals>
+                <goal>install-node-and-npm</goal>
+            </goals>
+        </execution>
+
+        <!-- Step 2: Run npm install -->
+        <execution>
+            <id>npm-install</id>
+            <goals>
+                <goal>npm</goal>
+            </goals>
+            <configuration>
+                <arguments>install</arguments>
+            </configuration>
+        </execution>
+
+        <!-- Step 3: Build Angular for Production -->
+        <execution>
+            <id>ng-build</id>
+            <goals>
+                <goal>npm</goal>
+            </goals>
+            <configuration>
+                <arguments>run build -- --configuration=production --output-path=target/webapp</arguments>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+2. Configure WildFly Deployment
+WildFly expects the Angular files to be inside the ROOT.war or inside a subfolder of deployments.
+
+After building the Angular project, place the output (target/webapp) into src/main/webapp so that it gets packaged into the .war.
+
+Update pom.xml to Copy Output
+xml
+Copier
+Modifier
+<plugin>
+    <artifactId>maven-resources-plugin</artifactId>
+    <version>3.2.0</version>
+    <executions>
+        <execution>
+            <id>copy-angular-build</id>
+            <phase>package</phase>
+            <goals>
+                <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+                <outputDirectory>${project.build.directory}/webapp</outputDirectory>
+                <resources>
+                    <resource>
+                        <directory>${project.basedir}/src/main/webapp</directory>
+                        <filtering>false</filtering>
+                    </resource>
+                </resources>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+3. Deploy to WildFly
+Once the build is complete:
+
+Package the application:
+
+sh
+Copier
+Modifier
+mvn clean package
+Deploy the generated .war (e.g., target/your-app.war) to WildFly by copying it to:
+
+sh
+Copier
+Modifier
+cp target/your-app.war $WILDFLY_HOME/standalone/deployments/
+Summary of Changes
+✅ Removes npm start (development mode).
+✅ Adds ng build --output-path=target/webapp for production deployment.
+✅ Copies the build output into src/main/webapp for inclusion in the .war.
+✅ Deploys as a WildFly web application.
+
+Would you like help with any additional configuration? 🚀
