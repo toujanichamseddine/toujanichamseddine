@@ -1,111 +1,75 @@
-1. Fix login() in auth.service.ts
-Modify your AuthService to call the backend SAML authentication endpoint.
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>saml-spring</artifactId>
+    <version>1.0.0</version>
+    <packaging>war</packaging>
 
-✅ Corrected auth.service.ts
-typescript
-Copier
-Modifier
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { ConfigService } from './config.service';
-import { Router } from '@angular/router';
+    <properties>
+        <java.version>1.8</java.version>
+        <spring.security.version>5.2.12.RELEASE</spring.security.version>
+        <spring.security.saml.version>1.0.10.RELEASE</spring.security.saml.version>
+        <opensaml.version>3.4.6</opensaml.version>
+    </properties>
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-  private backendUrl: string = '';
+    <dependencies>
+        <!-- Spring -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>5.2.9.RELEASE</version>
+        </dependency>
 
-  constructor(private http: HttpClient, private configService: ConfigService, private router: Router) {
-    this.configService.loadConfig().subscribe(config => {
-      this.backendUrl = `http://${config.backend.host}:${config.backend.port}`;
-    });
-  }
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+            <version>${spring.security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <version>${spring.security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security.extensions</groupId>
+            <artifactId>spring-security-saml2-core</artifactId>
+            <version>${spring.security.saml.version}</version>
+        </dependency>
 
-  // Call backend SAML authentication API
-  login(): Observable<any> {
-    return this.http.get(`${this.backendUrl}/saml/login`, { withCredentials: true });
-  }
+        <!-- OpenSAML (might conflict with Spring Security SAML) -->
+        <dependency>
+            <groupId>org.opensaml</groupId>
+            <artifactId>opensaml-core</artifactId>
+            <version>${opensaml.version}</version>
+        </dependency>
 
-  // Check if user is logged in
-  isLoggedIn(): boolean {
-    return typeof window !== 'undefined' && sessionStorage.getItem('user') !== null;
-  }
+        <!-- Servlet API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
-  // Store user session after login
-  storeUserSession(userData: any): void {
-    sessionStorage.setItem('user', JSON.stringify(userData));
-  }
-
-  // Logout function
-  logout(): void {
-    sessionStorage.removeItem('user');
-    this.router.navigate(['/login']);
-  }
-}
-2. Call the login() Function from LoginComponent
-Modify your login.component.ts file to properly call the backend and store user session.
-
-✅ Corrected login.component.ts
-typescript
-Copier
-Modifier
-import { Component } from '@angular/core';
-import { AuthService } from '../services/auth.service';
-import { Router } from '@angular/router';
-
-@Component({
-  selector: 'app-login',
-  standalone: true,
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
-  imports: [ /* Import necessary Angular modules */ ]
-})
-export class LoginComponent {
-
-  constructor(private authService: AuthService, private router: Router) {}
-
-  login() {
-    this.authService.login().subscribe({
-      next: (response) => {
-        this.authService.storeUserSession(response);
-        this.router.navigate(['/home']); // Redirect to home after login
-      },
-      error: (err) => {
-        console.error('Login failed:', err);
-      }
-    });
-  }
-}
-3. Update config.json for Backend URL
-Ensure your config.json file contains the backend host and port:
-
-✅ src/assets/config.json
-json
-Copier
-Modifier
-{
-  "backend": {
-    "host": "localhost",
-    "port": 8080
-  }
-}
-4. How the Flow Works Now
-User clicks "Login" in the frontend.
-
-Angular calls the backend SAML login API (http://localhost:8080/saml/login).
-
-Backend handles authentication and returns user session data.
-
-User session is stored in sessionStorage.
-
-User is redirected to /home where session info is displayed.
-
-Why This Fix Works
-✅ Calls the Backend Instead of Navigating to /login on the Frontend
-✅ Uses ConfigService for Dynamic Backend URL
-✅ Stores User Session Securely in sessionStorage
-✅ Redirects to /home After Successful Login
-
-Let me know if you need further improvements! 🚀
+    <build>
+        <finalName>saml-app</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
