@@ -1,22 +1,35 @@
-package com.example.model;
+package com.example.service;
 
+import com.example.model.SamlUserDetails;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.saml.SAMLCredential;
+import org.springframework.security.saml.userdetails.SAMLUserDetailsService;
+import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
-public class SamlUserDetails extends User {
-    private final String email;
-    private final String displayName;
+@Service
+public class SamlUserDetailsServiceImpl implements SAMLUserDetailsService {
 
-    public SamlUserDetails(String username, String email, String displayName, 
-                          Collection<? extends GrantedAuthority> authorities) {
-        super(username, "", authorities);
-        this.email = email;
-        this.displayName = displayName;
+    @Override
+    public Object loadUserBySAML(SAMLCredential credential) {
+        
+        // Extract SAML attributes
+        String username = credential.getNameID().getValue();
+        String email = credential.getAttributeAsString("email");
+        String displayName = credential.getAttributeAsString("displayName");
+
+        // Create authorities (adjust based on your requirements)
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+        return new SamlUserDetails(
+            username, 
+            email, 
+            displayName, 
+            authorities
+        );
     }
-
-    // Getters
-    public String getEmail() { return email; }
-    public String getDisplayName() { return displayName; }
 }
