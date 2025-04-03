@@ -1,85 +1,22 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:security="http://www.springframework.org/schema/security"
-       xsi:schemaLocation="...">
-    
-    <!-- Remove metadataGeneratorFilter if using static SP metadata -->
-    
-    <security:http use-expressions="true" entry-point-ref="samlEntryPoint">
-        <security:csrf disabled="true"/>
-        <security:custom-filter after="BASIC_AUTH_FILTER" ref="samlFilter"/>
-    </security:http>
+package com.example.model;
 
-    <!-- Add Key Manager -->
-    <bean id="keyManager" class="org.springframework.security.saml.key.JKSKeyManager">
-        <constructor-arg value="classpath:keystore.jks"/>
-        <constructor-arg type="java.lang.String" value="password"/>
-        <constructor-arg>
-            <map>
-                <entry key="apollo" value="password"/>
-            </map>
-        </constructor-arg>
-        <constructor-arg type="java.lang.String" value="apollo"/>
-    </bean>
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 
-    <!-- Metadata Configuration -->
-    <bean id="metadata" class="org.springframework.security.saml.metadata.CachingMetadataManager">
-        <constructor-arg>
-            <list>
-                <!-- IDP Metadata -->
-                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
-                    <constructor-arg>
-                        <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider">
-                            <constructor-arg value="classpath:idp-metadata.xml"/>
-                            <property name="parserPool" ref="parserPool"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata"/>
-                    </constructor-arg>
-                </bean>
-                
-                <!-- SP Metadata -->
-                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
-                    <constructor-arg>
-                        <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider">
-                            <constructor-arg value="classpath:sp-metadata.xml"/>
-                            <property name="parserPool" ref="parserPool"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata">
-                            <property name="local" value="true"/>
-                            <property name="securityProfile" value="metaiop"/>
-                            <property name="sslSecurityProfile" value="metaiop"/>
-                        </bean>
-                    </constructor-arg>
-                </bean>
-            </list>
-        </constructor-arg>
-    </bean>
+import java.util.Collection;
 
-    <!-- SAML Processor -->
-    <bean id="samlProcessor" class="org.springframework.security.saml.processor.SAMLProcessorImpl">
-        <constructor-arg>
-            <list>
-                <ref bean="redirectBinding"/>
-                <ref bean="postBinding"/>
-            </list>
-        </constructor-arg>
-    </bean>
+public class SamlUserDetails extends User {
+    private final String email;
+    private final String displayName;
 
-    <!-- Bindings -->
-    <bean id="postBinding" class="org.springframework.security.saml.processor.HTTPPostBinding">
-        <constructor-arg ref="parserPool"/>
-        <constructor-arg ref="velocityEngine"/>
-    </bean>
+    public SamlUserDetails(String username, String email, String displayName, 
+                          Collection<? extends GrantedAuthority> authorities) {
+        super(username, "", authorities);
+        this.email = email;
+        this.displayName = displayName;
+    }
 
-    <bean id="redirectBinding" class="org.springframework.security.saml.processor.HTTPRedirectDeflateBinding">
-        <constructor-arg ref="parserPool"/>
-    </bean>
-
-    <!-- Other essential beans -->
-    <bean id="parserPool" class="org.opensaml.xml.parse.StaticBasicParserPool" init-method="initialize"/>
-    <bean id="velocityEngine" class="org.springframework.security.saml.util.VelocityFactory" factory-method="getEngine"/>
-</beans>
+    // Getters
+    public String getEmail() { return email; }
+    public String getDisplayName() { return displayName; }
+}
