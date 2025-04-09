@@ -1,35 +1,164 @@
+package com.calyon.espm.controller.rest;
+
+import com.calyon.dsi.common.log.Log;
+import com.calyon.dsi.common.log.LogFactory;
+import com.calyon.espm.service.AuthenticationService;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
-     * Vérifie si l'utilisateur possède un rôle spécifique
-     * @param role Le rôle à vérifier
-     * @return true si l'utilisateur possède le rôle, false sinon
+ * Contrôleur REST pour exposer les fonctionnalités d'authentification SAML à une application frontend
+ * Utilise JAX-RS (javax.ws.rs) au lieu de Spring MVC
+ */
+@Path("/api/auth")
+public class AuthRestController {
+
+    private static final Log log = LogFactory.getLog(AuthRestController.class);
+
+    @Inject
+    private AuthenticationService authenticationService;
+
+    /**
+     * Vérifie si l'utilisateur est authentifié et renvoie ses informations
+     * @return Les informations de l'utilisateur ou un statut 401 si non authentifié
      */
-    public boolean hasRole(String role) {
-        if (roles == null || role == null) {
-            return false;
+    @GET
+    @Path("/status")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAuthStatus() {
+        if (authenticationService.isAuthenticated()) {
+            Map<String, Object> userInfo = authenticationService.getCurrentUserInfo();
+            return Response.ok(userInfo).build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(createErrorResponse("Non authentifié"))
+                    .build();
         }
-        
-        // Vérifier avec et sans le préfixe ROLE_
-        String roleToCheck = role.startsWith("ROLE_") ? role : "ROLE_" + role;
-        String simplifiedRole = role.startsWith("ROLE_") ? role.substring(5) : role;
-        
-        return roles.contains(roleToCheck) || roles.contains(simplifiedRole);
     }
 
     /**
-     * Vérifie si l'utilisateur possède au moins un des rôles spécifiés
-     * @param rolesToCheck Les rôles à vérifier
-     * @return true si l'utilisateur possède au moins un des rôles, false sinon
+     * Renvoie les informations de l'utilisateur actuellement authentifié
+     * @return Les informations de l'utilisateur ou un statut 401 si non authentifié
      */
-    public boolean hasAnyRole(String... rolesToCheck) {
-        if (roles == null || rolesToCheck == null) {
-            return false;
+    @GET
+    @Path("/user")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUserInfo() {
+        if (authenticationService.isAuthenticated()) {
+            Map<String, Object> userInfo = authenticationService.getCurrentUserInfo();
+            return Response.ok(userInfo).build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(createErrorResponse("Non authentifié"))
+                    .build();
         }
-        
-        for (String role : rolesToCheck) {
-            if (hasRole(role)) {
-                return true;
-            }
-        }
-        
-        return false;
     }
+
+    /**
+     * Renvoie l'URL pour initier le processus de connexion SAML
+     * @return L'URL de connexion SAML
+     */
+    @GET
+    @Path("/login-url")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLoginUrl(@Context HttpServletRequest request) {
+        String baseUrl = getBaseUrl(request);
+        String loginUrl = baseUrl + authenticationService.getSamlLoginUrl();
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("loginUrl", loginUrl);
+        
+        return Response.ok(response).build();
+    }
+
+    /**
+     * Renvoie l'URL pour initier le processus de déconnexion SAML
+     * @return L'URL de déconnexion SAML
+     */
+    @GET
+    @Path("/logout-url")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLogoutUrl(@Context HttpServletRequest request) {
+        if (authenticationService.isAuthenticated()) {
+            String baseUrl = getBaseUrl(request);
+            String logoutUrl = baseUrl + authenticationService.getSamlLogoutUrl();
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("logoutUrl", logoutUrl);
+            
+            return Response.ok(response).build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(createErrorResponse("Non authentifié"))
+                    .build();
+        }
+    }
+
+    /**
+     * Vérifie si l'utilisateur a un rôle spécifique
+     * @param role Le rôle à vérifier
+     * @return true si l'utilisateur a le rôle, false sinon
+     */
+    @GET
+    @Path("/has-role/{role}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response hasRole(@PathParam("role") String role) {
+        if (authenticationService.isAuthenticated()) {
+            boolean hasRole = authenticationService.hasRole(role);
+            
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("hasRole", hasRole);
+            
+            return Response.ok(response).build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(createErrorResponse("Non authentifié"))
+                    .build();
+        }
+    }
+
+    /**
+     * Crée une réponse d'erreur standardisée
+     * @param message Le message d'erreur
+     * @return La réponse d'erreur
+     */
+    private Map<String, String> createErrorResponse(String message) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", message);
+        return response;
+    }
+
+    /**
+     * Récupère l'URL de base de la requête
+     * @param request La requête HTTP
+     * @return L'URL de base
+     */
+    private String getBaseUrl(HttpServletRequest request) {
+        String scheme = request.getScheme();
+        String serverName = request.getServerName();
+        int serverPort = request.getServerPort();
+        String contextPath = request.getContextPath();
+        
+        StringBuilder url = new StringBuilder();
+        url.append(scheme).append("://").append(serverName);
+        
+        if ((serverPort != 80) && (serverPort != 443)) {
+            url.append(":").append(serverPort);
+        }
+        
+        url.append(contextPath);
+        
+        if (url.toString().endsWith("/")) {
+            url.deleteCharAt(url.length() - 1);
+        }
+        
+        return url.toString();
+    }
+}
