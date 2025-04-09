@@ -1,38 +1,125 @@
-package com.calyon.espm.security;
+✅ STEP 1: Add Swagger/OpenAPI Dependencies
+Add this to your pom.xml:
 
-import org.springframework.security.saml.SAMLAuthenticationProvider;
-import org.springframework.security.saml.userdetails.SAMLUserDetailsService;
-import org.springframework.security.saml.SAMLCredential;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
+xml
+Copier
+Modifier
+<dependency>
+    <groupId>io.swagger.core.v3</groupId>
+    <artifactId>swagger-jaxrs2</artifactId>
+    <version>2.2.15</version>
+</dependency>
 
-public class CustomSAMLAuthenticationProvider extends SAMLAuthenticationProvider {
+<dependency>
+    <groupId>io.swagger.core.v3</groupId>
+    <artifactId>swagger-jaxrs2-servlet-initializer-v2</artifactId>
+    <version>2.2.15</version>
+</dependency>
 
-    private SAMLUserDetailsService userDetails;
+<dependency>
+    <groupId>jakarta.ws.rs</groupId>
+    <artifactId>jakarta.ws.rs-api</artifactId>
+    <version>2.1.6</version>
+</dependency>
+These are compatible with Java 1.8 and JAX-RS 2.x.
 
-    private boolean forcePrincipalAsString = false;
+✅ STEP 2: Create Swagger Configuration Class
+java
+Copier
+Modifier
+package com.example.config;
 
-    @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        // You can log here or customize logic
-        return super.authenticate(authentication);
-    }
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
 
-    @Override
-    public Object getPrincipal(SAMLCredential credential, Object userDetails) {
-        if (forcePrincipalAsString) {
-            return credential.getNameID().getValue();
-        }
-        return userDetails;
-    }
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
 
-    public void setUserDetails(SAMLUserDetailsService userDetails) {
-        this.userDetails = userDetails;
-        super.setUserDetails(userDetails);
-    }
+@ApplicationPath("/api") // Base path for REST API
+@OpenAPIDefinition(
+    info = @Info(
+        title = "My REST API",
+        version = "1.0",
+        description = "Auto-generated docs for your JAX-RS endpoints"
+    )
+)
+public class RestApplication extends Application {
+}
+You must extend javax.ws.rs.core.Application and annotate with @ApplicationPath.
 
-    public void setForcePrincipalAsString(boolean forcePrincipalAsString) {
-        this.forcePrincipalAsString = forcePrincipalAsString;
+✅ STEP 3: Annotate Your Resource Classes
+Example:
+
+java
+Copier
+Modifier
+package com.example.resources;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import io.swagger.v3.oas.annotations.Operation;
+
+@Path("/users")
+public class UserResource {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "List users", description = "Returns a list of all users")
+    public Response listUsers() {
+        return Response.ok("[{\"name\": \"Alice\"}]").build();
     }
 }
+✅ STEP 4: Add Swagger Servlet to web.xml
+Swagger needs to serve its OpenAPI documentation. Add this to WEB-INF/web.xml:
+
+xml
+Copier
+Modifier
+<servlet>
+    <servlet-name>OpenApiServlet</servlet-name>
+    <servlet-class>io.swagger.v3.oas.integration.servlet.OpenApiServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>OpenApiServlet</servlet-name>
+    <url-pattern>/openapi</url-pattern>
+</servlet-mapping>
+This exposes the OpenAPI JSON at /openapi
+
+✅ STEP 5: Optional – Serve Swagger UI
+You can download the Swagger UI dist and:
+
+Place its static files in src/main/webapp/swagger-ui/
+
+Edit index.html:
+
+html
+Copier
+Modifier
+const ui = SwaggerUIBundle({
+  url: "/openapi",
+  dom_id: '#swagger-ui',
+  ...
+});
+Access Swagger UI in browser:
+👉 http://localhost:8080/your-app/swagger-ui/index.html
+
+✅ STEP 6: Rebuild and Deploy
+bash
+Copier
+Modifier
+mvn clean package
+# deploy target/*.war to WildFly or your servlet container
+Then access:
+
+📄 OpenAPI JSON: http://localhost:8080/your-app/openapi
+
+🧪 Swagger UI: http://localhost:8080/your-app/swagger-ui/index.html
+
+✅ Bonus: Auto Scan All REST Classes
+If you're registering JAX-RS resources manually, make sure all annotated @Path classes are discovered via your RestApplication subclass (or registered manually if needed).
+
+Would you like me to generate a working Maven sample project with this setup that you can unzip and run directly?
