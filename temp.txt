@@ -1,222 +1,38 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:security="http://www.springframework.org/schema/security"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:jee="http://www.springframework.org/schema/jee"
-       xmlns:jaxrs="http://cxf.apache.org/jaxrs"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans
-                           http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/security
-                           http://www.springframework.org/schema/security/spring-security.xsd
-                           http://www.springframework.org/schema/context
-                           http://www.springframework.org/schema/context/spring-context.xsd
-                           http://www.springframework.org/schema/jee
-                           http://www.springframework.org/schema/jee/spring-jee.xsd
-                           http://cxf.apache.org/jaxrs
-                           http://cxf.apache.org/schemas/jaxrs.xsd">
+package com.calyon.espm.security;
 
-    <!-- Activation de la détection automatique des composants -->
-    <context:component-scan base-package="com.calyon.espm"/>
-    
-    <!-- Activation des annotations CDI (@Named, @Inject) -->
-    <context:annotation-config/>
+import org.springframework.security.saml.SAMLAuthenticationProvider;
+import org.springframework.security.saml.userdetails.SAMLUserDetailsService;
+import org.springframework.security.saml.SAMLCredential;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
 
-    <!-- Configuration des ressources JNDI -->
-    <jee:jndi-lookup id="pathIdpMetadata" jndi-name="java:jboss/resources/url/pathIdpMetadata"/>
-    <jee:jndi-lookup id="pathSpMetadata" jndi-name="java:jboss/resources/url/pathSpMetadata"/>
+public class CustomSAMLAuthenticationProvider extends SAMLAuthenticationProvider {
 
-    <!-- ================= CONFIGURATION SAML ================= -->
+    private SAMLUserDetailsService userDetails;
 
-    <!-- Gestionnaire de clés pour la signature et le chiffrement -->
-    <bean id="keyManager" class="org.springframework.security.saml.key.JKSKeyManager">
-        <constructor-arg value="classpath:security/samlKeystore.jks"/>
-        <constructor-arg type="java.lang.String" value="nalle123"/>
-        <constructor-arg>
-            <map>
-                <entry key="whiteapp-signing" value="nalle123"/>
-            </map>
-        </constructor-arg>
-        <constructor-arg type="java.lang.String" value="whiteapp-signing"/>
-    </bean>
+    private boolean forcePrincipalAsString = false;
 
-    <!-- Gestionnaire de métadonnées SAML -->
-    <bean id="metadataManager" class="org.springframework.security.saml.metadata.CachingMetadataManager">
-        <constructor-arg>
-            <list>
-                <!-- Métadonnées du fournisseur d'identité (IdP) -->
-                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ResourceBackedMetadataProvider">
-                            <constructor-arg>
-                                <bean class="org.springframework.security.saml.util.SAMLUtil" factory-method="getResourceFromJNDI">
-                                    <constructor-arg ref="pathIdpMetadata"/>
-                                </bean>
-                            </constructor-arg>
-                            <constructor-arg>
-                                <bean class="org.springframework.security.saml.metadata.MetadataProcessor"/>
-                            </constructor-arg>
-                            <property name="parserPool" ref="parserPool"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata"/>
-                    </constructor-arg>
-                </bean>
-                
-                <!-- Métadonnées du fournisseur de service (SP) -->
-                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ResourceBackedMetadataProvider">
-                            <constructor-arg>
-                                <bean class="org.springframework.security.saml.util.SAMLUtil" factory-method="getResourceFromJNDI">
-                                    <constructor-arg ref="pathSpMetadata"/>
-                                </bean>
-                            </constructor-arg>
-                            <constructor-arg>
-                                <bean class="org.springframework.security.saml.metadata.MetadataProcessor"/>
-                            </constructor-arg>
-                            <property name="parserPool" ref="parserPool"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata"/>
-                    </constructor-arg>
-                </bean>
-            </list>
-        </constructor-arg>
-    </bean>
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        // You can log here or customize logic
+        return super.authenticate(authentication);
+    }
 
-    <!-- Service de détails utilisateur SAML -->
-    <bean id="samlUserDetailsService" class="com.calyon.espm.security.SAMLDetailsService"/>
+    @Override
+    public Object getPrincipal(SAMLCredential credential, Object userDetails) {
+        if (forcePrincipalAsString) {
+            return credential.getNameID().getValue();
+        }
+        return userDetails;
+    }
 
-    <!-- Gestionnaire d'authentification SAML -->
-    <bean id="samlAuthenticationManager" class="com.calyon.espm.security.SAMLAuthenticationManager"/>
+    public void setUserDetails(SAMLUserDetailsService userDetails) {
+        this.userDetails = userDetails;
+        super.setUserDetails(userDetails);
+    }
 
-    <!-- Fournisseur d'authentification SAML personnalisé -->
-    <bean id="samlAuthenticationProvider" class="com.calyon.espm.security.CustomSAMLAuthenticationProvider">
-        <property name="userDetails" ref="samlUserDetailsService"/>
-        <property name="forcePrincipalAsString" value="false"/>
-    </bean>
-
-    <!-- Gestionnaire d'authentification réussie -->
-    <bean id="successRedirectHandler" class="org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler">
-        <property name="defaultTargetUrl" value="/admin"/>
-    </bean>
-
-    <!-- Gestionnaire d'authentification échouée -->
-    <bean id="failureRedirectHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
-        <property name="useForward" value="true"/>
-        <property name="defaultFailureUrl" value="/error"/>
-    </bean>
-
-    <!-- Gestionnaire de déconnexion -->
-    <bean id="logoutHandler" class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler">
-        <property name="invalidateHttpSession" value="true"/>
-    </bean>
-
-    <!-- Gestionnaire de déconnexion SAML -->
-    <bean id="samlLogoutHandler" class="org.springframework.security.saml.SAMLLogoutProcessingFilter">
-        <constructor-arg ref="successRedirectHandler"/>
-        <constructor-arg ref="logoutHandler"/>
-    </bean>
-
-    <!-- Filtre de déconnexion SAML -->
-    <bean id="samlLogoutFilter" class="org.springframework.security.saml.SAMLLogoutFilter">
-        <constructor-arg index="0" ref="successRedirectHandler"/>
-        <constructor-arg index="1">
-            <list>
-                <ref bean="logoutHandler"/>
-            </list>
-        </constructor-arg>
-        <constructor-arg index="2">
-            <list>
-                <ref bean="logoutHandler"/>
-            </list>
-        </constructor-arg>
-    </bean>
-
-    <!-- Filtre de métadonnées SAML -->
-    <bean id="metadataGeneratorFilter" class="org.springframework.security.saml.metadata.MetadataGeneratorFilter">
-        <constructor-arg>
-            <bean class="org.springframework.security.saml.metadata.MetadataGenerator">
-                <property name="entityId" value="com:calyon:espm:sp"/>
-                <property name="extendedMetadata">
-                    <bean class="org.springframework.security.saml.metadata.ExtendedMetadata">
-                        <property name="idpDiscoveryEnabled" value="true"/>
-                    </bean>
-                </property>
-            </bean>
-        </constructor-arg>
-    </bean>
-
-    <!-- Point d'entrée SAML -->
-    <bean id="samlEntryPoint" class="org.springframework.security.saml.SAMLEntryPoint">
-        <property name="defaultProfileOptions">
-            <bean class="org.springframework.security.saml.websso.WebSSOProfileOptions">
-                <property name="includeScoping" value="false"/>
-            </bean>
-        </property>
-    </bean>
-
-    <!-- Filtre d'authentification SAML -->
-    <bean id="samlWebSSOProcessingFilter" class="org.springframework.security.saml.SAMLProcessingFilter">
-        <property name="authenticationManager" ref="authenticationManager"/>
-        <property name="authenticationSuccessHandler" ref="successRedirectHandler"/>
-        <property name="authenticationFailureHandler" ref="failureRedirectHandler"/>
-    </bean>
-
-    <!-- Filtre de découverte SAML -->
-    <bean id="samlIDPDiscovery" class="org.springframework.security.saml.SAMLDiscovery"/>
-
-    <!-- Contexte SAML -->
-    <bean id="contextProvider" class="org.springframework.security.saml.context.SAMLContextProviderImpl"/>
-
-    <!-- Pool de parseurs XML -->
-    <bean id="parserPool" class="org.opensaml.xml.parse.StaticBasicParserPool" init-method="initialize"/>
-    <bean id="parserPoolHolder" class="org.springframework.security.saml.parser.ParserPoolHolder"/>
-
-    <!-- Configuration de Spring Security -->
-    <security:authentication-manager alias="authenticationManager">
-        <security:authentication-provider ref="samlAuthenticationProvider"/>
-    </security:authentication-manager>
-
-    <!-- Configuration des filtres de sécurité -->
-    <security:http entry-point-ref="samlEntryPoint" use-expressions="true">
-        <security:intercept-url pattern="/saml/**" access="permitAll"/>
-        <security:intercept-url pattern="/login" access="permitAll"/>
-        <security:intercept-url pattern="/logout" access="permitAll"/>
-        <security:intercept-url pattern="/error" access="permitAll"/>
-        <security:intercept-url pattern="/admin" access="hasRole('ADMIN')"/>
-        <security:intercept-url pattern="/userinfo" access="isAuthenticated()"/>
-        <security:intercept-url pattern="/api/auth/**" access="permitAll"/>
-        <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-        
-        <security:custom-filter before="FIRST" ref="metadataGeneratorFilter"/>
-        <security:custom-filter after="BASIC_AUTH_FILTER" ref="samlWebSSOProcessingFilter"/>
-        <security:custom-filter after="LOGOUT" ref="samlLogoutFilter"/>
-        <security:custom-filter after="LOGOUT" ref="samlLogoutHandler"/>
-        <security:custom-filter after="SAML_LOGOUT_HANDLER" ref="samlIDPDiscovery"/>
-        
-        <security:csrf disabled="true"/>
-    </security:http>
-
-    <!-- ================= CONFIGURATION JAX-RS ================= -->
-    
-    <!-- Configuration du serveur JAX-RS avec Apache CXF -->
-    <jaxrs:server id="restServer" address="/api">
-        <jaxrs:serviceBeans>
-            <ref bean="authRestController"/>
-        </jaxrs:serviceBeans>
-        <jaxrs:providers>
-            <bean class="org.codehaus.jackson.jaxrs.JacksonJsonProvider"/>
-        </jaxrs:providers>
-    </jaxrs:server>
-    
-    <!-- Contrôleur REST pour l'authentification -->
-    <bean id="authRestController" class="com.calyon.espm.controller.rest.AuthRestController"/>
-    
-    <!-- Service d'authentification -->
-    <bean id="authenticationService" class="com.calyon.espm.service.AuthenticationService"/>
-
-</beans>
+    public void setForcePrincipalAsString(boolean forcePrincipalAsString) {
+        this.forcePrincipalAsString = forcePrincipalAsString;
+    }
+}
