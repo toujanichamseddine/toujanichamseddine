@@ -1,106 +1,35 @@
-package com.calyon.espm.security;
-
-import com.calyon.dsi.common.log.Log;
-import com.calyon.dsi.common.log.LogFactory;
-import com.calyon.espm.model.SAMLUser;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.saml.SAMLAuthenticationToken;
-import org.springframework.security.saml.SAMLCredential;
-import org.springframework.security.saml.context.SAMLMessageContext;
-import org.springframework.security.saml.userdetails.SAMLUserDetailsService;
-import org.springframework.stereotype.Component;
-
 /**
- * Gestionnaire d'authentification SAML
- * Cette classe gère le processus d'authentification SAML et fournit des méthodes utilitaires
- */
-@Component
-public class SAMLAuthenticationManager {
-
-    private static final Log log = LogFactory.getLog(SAMLAuthenticationManager.class);
-
-    @Autowired
-    private SAMLUserDetailsService samlUserDetailsService;
-
-    /**
-     * Récupère l'utilisateur SAML actuellement authentifié
-     * @return L'utilisateur SAML ou null si non authentifié
-     */
-    public SAMLUser getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof SAMLUser) {
-            return (SAMLUser) auth.getPrincipal();
-        }
-        return null;
-    }
-
-    /**
-     * Vérifie si l'utilisateur courant est authentifié
-     * @return true si l'utilisateur est authentifié, false sinon
-     */
-    public boolean isAuthenticated() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.isAuthenticated();
-    }
-
-    /**
-     * Vérifie si l'utilisateur courant a un rôle spécifique
+     * Vérifie si l'utilisateur possède un rôle spécifique
      * @param role Le rôle à vérifier
-     * @return true si l'utilisateur a le rôle, false sinon
+     * @return true si l'utilisateur possède le rôle, false sinon
      */
     public boolean hasRole(String role) {
-        SAMLUser user = getCurrentUser();
-        return user != null && user.hasRole(role);
-    }
-
-    /**
-     * Vérifie si l'utilisateur courant a au moins un des rôles spécifiés
-     * @param roles Les rôles à vérifier
-     * @return true si l'utilisateur a au moins un des rôles, false sinon
-     */
-    public boolean hasAnyRole(String... roles) {
-        SAMLUser user = getCurrentUser();
-        return user != null && user.hasAnyRole(roles);
-    }
-
-    /**
-     * Traite une exception d'authentification SAML
-     * @param exception L'exception d'authentification
-     * @return Un message d'erreur approprié
-     */
-    public String handleAuthenticationException(AuthenticationException exception) {
-        log.error("Erreur d'authentification SAML: " + exception.getMessage(), exception);
+        if (roles == null || role == null) {
+            return false;
+        }
         
-        // Personnaliser les messages d'erreur en fonction du type d'exception
-        if (exception.getMessage().contains("User does not exist")) {
-            return "L'utilisateur n'existe pas dans le système.";
-        } else if (exception.getMessage().contains("Invalid credentials")) {
-            return "Identifiants invalides.";
-        } else {
-            return "Une erreur s'est produite lors de l'authentification. Veuillez réessayer ou contacter l'administrateur.";
-        }
+        // Vérifier avec et sans le préfixe ROLE_
+        String roleToCheck = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        String simplifiedRole = role.startsWith("ROLE_") ? role.substring(5) : role;
+        
+        return roles.contains(roleToCheck) || roles.contains(simplifiedRole);
     }
 
     /**
-     * Journalise les informations d'authentification SAML
-     * @param credential Les informations d'identification SAML
+     * Vérifie si l'utilisateur possède au moins un des rôles spécifiés
+     * @param rolesToCheck Les rôles à vérifier
+     * @return true si l'utilisateur possède au moins un des rôles, false sinon
      */
-    public void logAuthenticationInfo(SAMLCredential credential) {
-        if (credential == null) {
-            log.warn("Tentative de journalisation avec des informations d'identification nulles");
-            return;
+    public boolean hasAnyRole(String... rolesToCheck) {
+        if (roles == null || rolesToCheck == null) {
+            return false;
         }
-
-        log.info("Authentification SAML réussie pour l'utilisateur: " + credential.getNameID().getValue());
-        log.info("Émetteur: " + credential.getRemoteEntityID());
         
-        // Journaliser les attributs SAML
-        for (String attributeName : credential.getAttributes().keySet()) {
-            String value = credential.getAttributeAsString(attributeName);
-            log.info("Attribut SAML: " + attributeName + " = " + value);
+        for (String role : rolesToCheck) {
+            if (hasRole(role)) {
+                return true;
+            }
         }
+        
+        return false;
     }
-}
