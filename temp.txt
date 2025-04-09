@@ -1,28 +1,106 @@
-public Map<String, Object> getCurrentUserInfo() {
-    SAMLUser user = authenticationManager.getCurrentUser();
-    if (user == null) {
+package com.calyon.espm.security;
+
+import com.calyon.dsi.common.log.Log;
+import com.calyon.dsi.common.log.LogFactory;
+import com.calyon.espm.model.SAMLUser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.saml.SAMLAuthenticationToken;
+import org.springframework.security.saml.SAMLCredential;
+import org.springframework.security.saml.context.SAMLMessageContext;
+import org.springframework.security.saml.userdetails.SAMLUserDetailsService;
+import org.springframework.stereotype.Component;
+
+/**
+ * Gestionnaire d'authentification SAML
+ * Cette classe gère le processus d'authentification SAML et fournit des méthodes utilitaires
+ */
+@Component
+public class SAMLAuthenticationManager {
+
+    private static final Log log = LogFactory.getLog(SAMLAuthenticationManager.class);
+
+    @Autowired
+    private SAMLUserDetailsService samlUserDetailsService;
+
+    /**
+     * Récupère l'utilisateur SAML actuellement authentifié
+     * @return L'utilisateur SAML ou null si non authentifié
+     */
+    public SAMLUser getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof SAMLUser) {
+            return (SAMLUser) auth.getPrincipal();
+        }
         return null;
     }
 
-    Map<String, Object> userInfo = new HashMap<>();
-    userInfo.put("username", user.getUsername());
-    userInfo.put("email", user.getEmail());
-    userInfo.put("utCode", user.getUtCode());
-    userInfo.put("roles", user.getRoles());
-    userInfo.put("authenticated", true);
-
-    // Ajouter les attributs SAML si disponibles
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    if (auth != null && auth.getCredentials() instanceof SAMLCredential) {
-        SAMLCredential credential = (SAMLCredential) auth.getCredentials();
-        Map<String, String> samlAttributes = new HashMap<>();
-        
-        for (String attributeName : credential.getAttributes().keySet()) {
-            samlAttributes.put(attributeName, credential.getAttributeAsString(attributeName));
-        }
-        
-        userInfo.put("samlAttributes", samlAttributes);
+    /**
+     * Vérifie si l'utilisateur courant est authentifié
+     * @return true si l'utilisateur est authentifié, false sinon
+     */
+    public boolean isAuthenticated() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.isAuthenticated();
     }
 
-    return userInfo;
+    /**
+     * Vérifie si l'utilisateur courant a un rôle spécifique
+     * @param role Le rôle à vérifier
+     * @return true si l'utilisateur a le rôle, false sinon
+     */
+    public boolean hasRole(String role) {
+        SAMLUser user = getCurrentUser();
+        return user != null && user.hasRole(role);
+    }
+
+    /**
+     * Vérifie si l'utilisateur courant a au moins un des rôles spécifiés
+     * @param roles Les rôles à vérifier
+     * @return true si l'utilisateur a au moins un des rôles, false sinon
+     */
+    public boolean hasAnyRole(String... roles) {
+        SAMLUser user = getCurrentUser();
+        return user != null && user.hasAnyRole(roles);
+    }
+
+    /**
+     * Traite une exception d'authentification SAML
+     * @param exception L'exception d'authentification
+     * @return Un message d'erreur approprié
+     */
+    public String handleAuthenticationException(AuthenticationException exception) {
+        log.error("Erreur d'authentification SAML: " + exception.getMessage(), exception);
+        
+        // Personnaliser les messages d'erreur en fonction du type d'exception
+        if (exception.getMessage().contains("User does not exist")) {
+            return "L'utilisateur n'existe pas dans le système.";
+        } else if (exception.getMessage().contains("Invalid credentials")) {
+            return "Identifiants invalides.";
+        } else {
+            return "Une erreur s'est produite lors de l'authentification. Veuillez réessayer ou contacter l'administrateur.";
+        }
+    }
+
+    /**
+     * Journalise les informations d'authentification SAML
+     * @param credential Les informations d'identification SAML
+     */
+    public void logAuthenticationInfo(SAMLCredential credential) {
+        if (credential == null) {
+            log.warn("Tentative de journalisation avec des informations d'identification nulles");
+            return;
+        }
+
+        log.info("Authentification SAML réussie pour l'utilisateur: " + credential.getNameID().getValue());
+        log.info("Émetteur: " + credential.getRemoteEntityID());
+        
+        // Journaliser les attributs SAML
+        for (String attributeName : credential.getAttributes().keySet()) {
+            String value = credential.getAttributeAsString(attributeName);
+            log.info("Attribut SAML: " + attributeName + " = " + value);
+        }
+    }
 }
