@@ -1,104 +1,77 @@
-package com.calyon.espm.controller.rest;
+package com.calyon.espm.service;
 
 import com.calyon.dsi.common.log.Log;
 import com.calyon.dsi.common.log.LogFactory;
-import com.calyon.espm.service.AuthenticationService;
+import com.calyon.espm.model.SAMLUser;
+import com.calyon.espm.security.SAMLAuthenticationManager;
+import org.opensaml.saml2.core.Attribute;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.saml.SAMLCredential;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.inject.Named;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Contrôleur REST pour exposer les fonctionnalités d'authentification SAML à une application frontend
- * Utilise JAX-RS (javax.ws.rs) au lieu de Spring MVC
+ * Service pour gérer les opérations liées à l'authentification SAML
+ * et fournir des informations utilisateur au frontend
  */
-@Path("/api/auth")
-public class AuthRestController {
+@Named
+public class AuthenticationService {
 
-    private static final Log log = LogFactory.getLog(AuthRestController.class);
+    private static final Log log = LogFactory.getLog(AuthenticationService.class);
 
     @Inject
-    private AuthenticationService authenticationService;
+    private SAMLAuthenticationManager authenticationManager;
 
     /**
-     * Vérifie si l'utilisateur est authentifié et renvoie ses informations
-     * @return Les informations de l'utilisateur ou un statut 401 si non authentifié
+     * Récupère les informations de l'utilisateur actuellement authentifié
+     * @return Map contenant les informations utilisateur ou null si non authentifié
      */
-    @GET
-    @Path("/status")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getAuthStatus() {
-        if (authenticationService.isAuthenticated()) {
-            Map<String, Object> userInfo = authenticationService.getCurrentUserInfo();
-            return Response.ok(userInfo).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(createErrorResponse("Non authentifié"))
-                    .build();
+    public Map<String, Object> getCurrentUserInfo() {
+        SAMLUser user = authenticationManager.getCurrentUser();
+        if (user == null) {
+            return null;
         }
-    }
 
-    /**
-     * Renvoie les informations de l'utilisateur actuellement authentifié
-     * @return Les informations de l'utilisateur ou un statut 401 si non authentifié
-     */
-    @GET
-    @Path("/user")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getUserInfo() {
-        if (authenticationService.isAuthenticated()) {
-            Map<String, Object> userInfo = authenticationService.getCurrentUserInfo();
-            return Response.ok(userInfo).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(createErrorResponse("Non authentifié"))
-                    .build();
-        }
-    }
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("username", user.getUsername());
+        userInfo.put("email", user.getEmail());
+        userInfo.put("utCode", user.getUtCode());
+        userInfo.put("roles", user.getRoles());
+        userInfo.put("authenticated", true);
 
-    /**
-     * Renvoie l'URL pour initier le processus de connexion SAML
-     * @return L'URL de connexion SAML
-     */
-    @GET
-    @Path("/login-url")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getLoginUrl(@Context HttpServletRequest request) {
-        String baseUrl = getBaseUrl(request);
-        String loginUrl = baseUrl + authenticationService.getSamlLoginUrl();
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("loginUrl", loginUrl);
-        
-        return Response.ok(response).build();
-    }
-
-    /**
-     * Renvoie l'URL pour initier le processus de déconnexion SAML
-     * @return L'URL de déconnexion SAML
-     */
-    @GET
-    @Path("/logout-url")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getLogoutUrl(@Context HttpServletRequest request) {
-        if (authenticationService.isAuthenticated()) {
-            String baseUrl = getBaseUrl(request);
-            String logoutUrl = baseUrl + authenticationService.getSamlLogoutUrl();
+        // Ajouter les attributs SAML si disponibles
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getCredentials() instanceof SAMLCredential) {
+            SAMLCredential credential = (SAMLCredential) auth.getCredentials();
+            Map<String, String> samlAttributes = new HashMap<>();
             
-            Map<String, String> response = new HashMap<>();
-            response.put("logoutUrl", logoutUrl);
+            // Accéder directement aux attributs via la liste d'attributs
+            List<Attribute> attributes = credential.getAttributes();
+            if (attributes != null) {
+                for (Attribute attribute : attributes) {
+                    String name = attribute.getName();
+                    String value = credential.getAttributeAsString(name);
+                    samlAttributes.put(name, value);
+                }
+            }
             
-            return Response.ok(response).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(createErrorResponse("Non authentifié"))
-                    .build();
+            userInfo.put("samlAttributes", samlAttributes);
         }
+
+        return userInfo;
+    }
+
+    /**
+     * Vérifie si l'utilisateur est authentifié
+     * @return true si l'utilisateur est authentifié, false sinon
+     */
+    public boolean isAuthenticated() {
+        return authenticationManager.isAuthenticated();
     }
 
     /**
@@ -106,59 +79,23 @@ public class AuthRestController {
      * @param role Le rôle à vérifier
      * @return true si l'utilisateur a le rôle, false sinon
      */
-    @GET
-    @Path("/has-role/{role}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response hasRole(@PathParam("role") String role) {
-        if (authenticationService.isAuthenticated()) {
-            boolean hasRole = authenticationService.hasRole(role);
-            
-            Map<String, Boolean> response = new HashMap<>();
-            response.put("hasRole", hasRole);
-            
-            return Response.ok(response).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(createErrorResponse("Non authentifié"))
-                    .build();
-        }
+    public boolean hasRole(String role) {
+        return authenticationManager.hasRole(role);
     }
 
     /**
-     * Crée une réponse d'erreur standardisée
-     * @param message Le message d'erreur
-     * @return La réponse d'erreur
+     * Récupère l'URL de redirection pour l'authentification SAML
+     * @return L'URL de redirection
      */
-    private Map<String, String> createErrorResponse(String message) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", message);
-        return response;
+    public String getSamlLoginUrl() {
+        return "/saml/login";
     }
 
     /**
-     * Récupère l'URL de base de la requête
-     * @param request La requête HTTP
-     * @return L'URL de base
+     * Récupère l'URL de redirection pour la déconnexion SAML
+     * @return L'URL de redirection
      */
-    private String getBaseUrl(HttpServletRequest request) {
-        String scheme = request.getScheme();
-        String serverName = request.getServerName();
-        int serverPort = request.getServerPort();
-        String contextPath = request.getContextPath();
-        
-        StringBuilder url = new StringBuilder();
-        url.append(scheme).append("://").append(serverName);
-        
-        if ((serverPort != 80) && (serverPort != 443)) {
-            url.append(":").append(serverPort);
-        }
-        
-        url.append(contextPath);
-        
-        if (url.toString().endsWith("/")) {
-            url.deleteCharAt(url.length() - 1);
-        }
-        
-        return url.toString();
+    public String getSamlLogoutUrl() {
+        return "/saml/logout";
     }
 }
