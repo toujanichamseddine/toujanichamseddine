@@ -1,8 +1,54 @@
-<bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
-    <security:filter-chain-map request-matcher="ant">
-        <security:filter-chain pattern="/saml/login/**" filters="samlEntryPoint"/>
-        <security:filter-chain pattern="/saml/SSO/**" filters="samlWebSSOProcessingFilter"/>
-        <security:filter-chain pattern="/saml/**" filters="samlLogoutFilter"/>
-        <security:filter-chain pattern="/**" filters="metadataGeneratorFilter,samlFilterChain"/>
-    </security:filter-chain-map>
+✅ 3. Define samlEntryPoint in applicationContext.xml
+xml
+Copier
+Modifier
+<bean id="samlEntryPoint" class="org.springframework.security.saml.SAMLAuthenticationEntryPoint">
+    <property name="filterProcessesUrl" value="/saml/login"/>
 </bean>
+✅ 4. Verify Spring Security HTTP block
+You must have:
+
+xml
+Copier
+Modifier
+<security:http entry-point-ref="samlEntryPoint" use-expressions="true">
+    <security:intercept-url pattern="/saml/**" access="permitAll"/>
+    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
+    <security:custom-filter before="FIRST" ref="metadataGeneratorFilter"/>
+    <security:custom-filter after="BASIC_AUTH_FILTER" ref="samlFilter"/>
+</security:http>
+✅ 5. Servlet mapping in web.xml should not block /saml/login
+If you have a RESTEasy servlet mapped like:
+
+xml
+Copier
+Modifier
+<servlet-mapping>
+    <servlet-name>resteasy</servlet-name>
+    <url-pattern>/rest/*</url-pattern>
+</servlet-mapping>
+Then /saml/login should not be mapped to it. Make sure there's no servlet mapped to /* or /saml/* that could block Spring Security from handling the request.
+
+✅ 6. Trigger Login from Browser
+Now test again:
+
+bash
+Copier
+Modifier
+http://localhost:8080/espm/saml/login
+You should be redirected to your IdP.
+
+If you still get 404, try enabling Spring logs or WildFly request logs to confirm what is handling the /saml/login path.
+
+✅ Want me to generate a full working SAML + Spring Security (XML) project skeleton?
+If needed, I can package and send you a working minimal Maven project that runs on WildFly with Spring (non-Boot) + SAML. Just say the word 👌
+
+Let me know how far your config already goes, and I’ll guide you precisely.
+
+
+
+
+
+
+
+
