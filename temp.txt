@@ -1,10 +1,1 @@
-<!-- Redirects unauthenticated users to the IdP -->
-<bean id="samlEntryPoint" class="org.springframework.security.saml.SAMLAuthenticationEntryPoint">
-    <property name="filterProcessesUrl" value="/saml/login"/>
-    <property name="defaultProfileOptions">
-        <bean class="org.springframework.security.saml.websso.WebSSOProfileOptions">
-            <property name="includeScoping" value="false"/>
-            <property name="binding" value="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"/>
-        </bean>
-    </property>
-</bean>
+RESTEASY003210: Could not find resource for full path:
