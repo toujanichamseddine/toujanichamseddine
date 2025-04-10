@@ -1,1 +1,9 @@
-RESTEASY003210: Could not find resource for full path:
+<filter>
+    <filter-name>samlFilter</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+</filter>
+
+<filter-mapping>
+    <filter-name>samlFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
