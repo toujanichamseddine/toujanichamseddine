@@ -1,61 +1,198 @@
-Sure! Here's a minimal example of using Chart.js in an Angular project without any wrapper libraries, just pure Chart.js.
+Great! Based on the screenshot, I'll provide the structure of an HTML project that mimics the layout and elements of the desktop application. This will include:
 
-✅ Step 1: Install Chart.js
-bash
-Copier
-Modifier
-npm install chart.js
-✅ Step 2: Create a chart component
-chart.component.ts
-ts
-Copier
-Modifier
-import { Component, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import { Chart } from 'chart.js/auto';
+An HTML file for the layout
 
-@Component({
-  selector: 'app-chart',
-  templateUrl: './chart.component.html',
-  styleUrls: ['./chart.component.css']
-})
-export class ChartComponent implements AfterViewInit {
-  @ViewChild('myChart') myChartRef!: ElementRef;
+A CSS file for the yellow legacy-style look
 
-  ngAfterViewInit() {
-    const ctx = this.myChartRef.nativeElement;
+Minimal JavaScript for interactivity (optional, to be extended later)
 
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green'],
-        datasets: [{
-          label: 'Votes',
-          data: [12, 19, 3, 5],
-          backgroundColor: ['red', 'blue', 'yellow', 'green']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top'
-          },
-          title: {
-            display: true,
-            text: 'Simple Bar Chart'
-          }
-        }
-      }
-    });
-  }
-}
-✅ Step 3: Chart HTML
-chart.component.html
+1. index.html
 html
 Copier
 Modifier
-<canvas #myChart width="400" height="200"></canvas>
-✅ Step 4: Add to your module
-Make sure to declare the component in your module and use <app-chart></app-chart> where you want to display the chart.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Finance Deal Editor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-window">
+    <header class="menu-bar">
+      <ul>
+        <li>Fichier</li>
+        <li>Édition</li>
+        <li>Affichage</li>
+        <li>Investissement</li>
+        <li>Financement</li>
+        <li>Général</li>
+        <li>Support</li>
+        <li>Outils</li>
+      </ul>
+    </header>
 
-Let me know if you want a different chart type (line, pie, etc.), dynamic data, or multiple charts!
+    <div class="main-container">
+      <aside class="sidebar">
+        <div class="section">
+          <h3>Deals</h3>
+          <ul>
+            <li>AE7251</li>
+            <li>AE7251#01</li>
+            <li>AE7251#02</li>
+            <li>AE7251#03</li>
+            <li>AE7251#04</li>
+            <li>AE7251#05</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h3>Structure</h3>
+          <label>Product Type</label>
+          <select><option>HYBRID</option></select>
+          <label>Family Type</label>
+          <select><option>Autocall</option></select>
+          <!-- Add other structure fields -->
+        </div>
+
+        <div class="section">
+          <h3>STP Bond</h3>
+          <button>Run STP</button>
+        </div>
+      </aside>
+
+      <main class="form-section">
+        <div class="tabs">
+          <button class="active">Documents</button>
+          <button>Coupon Data</button>
+          <button>Call Data</button>
+          <button>Audit</button>
+          <button>Price Control</button>
+        </div>
+
+        <form>
+          <div class="form-grid">
+            <label>ISIN Code</label><input type="text" value="FR3CIBFS8310">
+            <label>Launch date</label><input type="date" value="2025-01-10">
+            <label>Issue date</label><input type="date" value="2025-04-15">
+            <label>Maturity date</label><input type="date" value="2035-04-16">
+            <label>Issuer</label><input type="text" value="CREDIT AGRICOLE CIB FINANC">
+            <label>Currency</label><select><option>EUR</option></select>
+            <label>Primary amount</label><input type="text" value="30 000 000,00">
+            <label>Coupon frequency</label><select><option>Annually</option></select>
+            <!-- Add more inputs accordingly -->
+          </div>
+        </form>
+
+        <div class="bottom-buttons">
+          <button>Standard</button>
+          <button>Manual</button>
+          <button>Check SOPHIS data</button>
+          <button>Save</button>
+          <button>Reload</button>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
+2. style.css
+css
+Copier
+Modifier
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #cfd8dc;
+}
+
+.app-window {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.menu-bar {
+  background: #e0e0e0;
+  padding: 5px;
+}
+
+.menu-bar ul {
+  list-style: none;
+  display: flex;
+  gap: 15px;
+  margin: 0;
+  padding: 0;
+}
+
+.main-container {
+  display: flex;
+  flex: 1;
+}
+
+.sidebar {
+  background-color: #f3f3a2;
+  padding: 10px;
+  width: 250px;
+  border-right: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.sidebar h3 {
+  margin-top: 0;
+}
+
+.sidebar label {
+  display: block;
+  margin: 5px 0 2px;
+}
+
+.sidebar select,
+.sidebar button {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.form-section {
+  flex: 1;
+  background-color: #fef3a4;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tabs button {
+  padding: 5px 10px;
+  background-color: #ccc;
+  border: none;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background-color: #999;
+  color: #fff;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 10px;
+}
+
+.form-grid input,
+.form-grid select {
+  padding: 4px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.bottom-buttons {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
