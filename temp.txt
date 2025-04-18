@@ -1,12 +1,5 @@
-Great! Based on the screenshot, I'll provide the structure of an HTML project that mimics the layout and elements of the desktop application. This will include:
-
-An HTML file for the layout
-
-A CSS file for the yellow legacy-style look
-
-Minimal JavaScript for interactivity (optional, to be extended later)
-
-1. index.html
+✅ Full Bootstrap HTML App Based on Your Screenshot (Part 1/2)
+📄 index.html
 html
 Copier
 Modifier
@@ -14,185 +7,201 @@ Modifier
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Finance Deal Editor</title>
+  <title>SPM Deal Editor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div class="app-window">
-    <header class="menu-bar">
-      <ul>
-        <li>Fichier</li>
-        <li>Édition</li>
-        <li>Affichage</li>
-        <li>Investissement</li>
-        <li>Financement</li>
-        <li>Général</li>
-        <li>Support</li>
-        <li>Outils</li>
-      </ul>
-    </header>
+<body class="bg-light">
 
-    <div class="main-container">
-      <aside class="sidebar">
-        <div class="section">
-          <h3>Deals</h3>
-          <ul>
-            <li>AE7251</li>
-            <li>AE7251#01</li>
-            <li>AE7251#02</li>
-            <li>AE7251#03</li>
-            <li>AE7251#04</li>
-            <li>AE7251#05</li>
-          </ul>
+  <nav class="bg-secondary text-white p-2">
+    Fichier | Edition | Affichage | Investissement | Financement | Général | Support | Outils
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row g-0">
+      
+      <!-- Sidebar -->
+      <aside class="col-md-3 bg-warning-subtle p-3 border-end">
+        <h5>Deals</h5>
+        <ul class="list-group mb-3">
+          <li class="list-group-item active">AE7251</li>
+          <li class="list-group-item">AE7251#01</li>
+          <li class="list-group-item">AE7251#02</li>
+          <li class="list-group-item">AE7251#03</li>
+          <li class="list-group-item">AE7251#04</li>
+        </ul>
+
+        <h5>Structure</h5>
+        <div class="mb-2">
+          <label class="form-label">Product Type</label>
+          <select class="form-select">
+            <option>HYBRID</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Infinity Keyword</label>
+          <input type="text" class="form-control">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Family Type</label>
+          <select class="form-select">
+            <option>Autocall</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Structure</label>
+          <input type="text" class="form-control" value="Undetermined">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Index</label>
+          <input type="text" class="form-control" value="Undetermined">
         </div>
 
-        <div class="section">
-          <h3>Structure</h3>
-          <label>Product Type</label>
-          <select><option>HYBRID</option></select>
-          <label>Family Type</label>
-          <select><option>Autocall</option></select>
-          <!-- Add other structure fields -->
+        <div class="form-check my-2">
+          <input class="form-check-input" type="checkbox" id="valuation">
+          <label class="form-check-label" for="valuation">Valuation</label>
         </div>
 
-        <div class="section">
-          <h3>STP Bond</h3>
-          <button>Run STP</button>
-        </div>
+        <h5 class="mt-3">STP Bond</h5>
+        <div class="text-danger mb-2">⚠️ STP Bond needed!</div>
+        <button class="btn btn-danger btn-sm w-100 mb-1">Run STP</button>
+        <div class="small text-muted">LEON ARIAS<br>15/04/25 5:38 PM</div>
       </aside>
 
-      <main class="form-section">
-        <div class="tabs">
-          <button class="active">Documents</button>
-          <button>Coupon Data</button>
-          <button>Call Data</button>
-          <button>Audit</button>
-          <button>Price Control</button>
-        </div>
+      <!-- Main Panel -->
+      <main class="col-md-9 bg-warning p-4">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" id="dealTabs" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#details" type="button">Deal Details</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#docs" type="button">Documents</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#audit" type="button">Audit</button></li>
+        </ul>
 
-        <form>
-          <div class="form-grid">
-            <label>ISIN Code</label><input type="text" value="FR3CIBFS8310">
-            <label>Launch date</label><input type="date" value="2025-01-10">
-            <label>Issue date</label><input type="date" value="2025-04-15">
-            <label>Maturity date</label><input type="date" value="2035-04-16">
-            <label>Issuer</label><input type="text" value="CREDIT AGRICOLE CIB FINANC">
-            <label>Currency</label><select><option>EUR</option></select>
-            <label>Primary amount</label><input type="text" value="30 000 000,00">
-            <label>Coupon frequency</label><select><option>Annually</option></select>
-            <!-- Add more inputs accordingly -->
+        <div class="tab-content">
+          <!-- Deal Details Tab -->
+          <div class="tab-pane fade show active" id="details">
+            <form>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">ISIN Code</label>
+                  <input type="text" class="form-control" value="FR3CIBFS8310">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">VALOREN Code</label>
+                  <input type="text" class="form-control">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">CUSIP Code</label>
+                  <input type="text" class="form-control">
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Launch Date</label>
+                  <input type="date" class="form-control" value="2025-01-10">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Issue Date</label>
+                  <input type="date" class="form-control" value="2025-04-15">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Maturity Date</label>
+                  <input type="date" class="form-control" value="2035-04-16">
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Issuer</label>
+                  <input type="text" class="form-control" value="CREDIT AGRICOLE CIB FINANC">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Bond Currency</label>
+                  <select class="form-select">
+                    <option selected>EUR</option>
+                    <option>USD</option>
+                    <option>GBP</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Coupon Frequency</label>
+                  <select class="form-select">
+                    <option selected>Annually</option>
+                    <option>Semi-annually</option>
+                    <option>Quarterly</option>
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Outstanding Amount</label>
+                  <input type="number" class="form-control" value="1000000">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Issue Price (%)</label>
+                  <input type="number" class="form-control" value="100.0000000">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Product Category</label>
+                  <select class="form-select">
+                    <option>Not required</option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Comments</label>
+                  <textarea class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="col-12 d-flex gap-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="linkType" id="link1">
+                    <label class="form-check-label" for="link1">Standard</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="linkType" id="link2">
+                    <label class="form-check-label" for="link2">Bloomberg</label>
+                  </div>
+                </div>
+
+                <div class="col-12 mt-3 d-flex gap-2">
+                  <button class="btn btn-secondary">Import QTR Data</button>
+                  <button class="btn btn-outline-dark">Check SOPHIS Data</button>
+                  <button class="btn btn-primary">Save</button>
+                  <button class="btn btn-danger">Reload</button>
+                </div>
+              </div>
+            </form>
           </div>
-        </form>
 
-        <div class="bottom-buttons">
-          <button>Standard</button>
-          <button>Manual</button>
-          <button>Check SOPHIS data</button>
-          <button>Save</button>
-          <button>Reload</button>
+          <!-- Other Tabs -->
+          <div class="tab-pane fade" id="docs">[Document data form here]</div>
+          <div class="tab-pane fade" id="audit">[Audit details here]</div>
         </div>
       </main>
+
     </div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-2. style.css
+✅ style.css
 css
 Copier
 Modifier
 body {
-  margin: 0;
-  font-family: sans-serif;
-  background-color: #cfd8dc;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
 }
 
-.app-window {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+.bg-warning-subtle {
+  background-color: #fffac0;
 }
 
-.menu-bar {
-  background: #e0e0e0;
-  padding: 5px;
+.bg-warning {
+  background-color: #fff8dc !important;
 }
 
-.menu-bar ul {
-  list-style: none;
-  display: flex;
-  gap: 15px;
-  margin: 0;
-  padding: 0;
+.nav-tabs .nav-link.active {
+  background-color: #e2e2e2;
 }
 
-.main-container {
-  display: flex;
-  flex: 1;
-}
-
-.sidebar {
-  background-color: #f3f3a2;
-  padding: 10px;
-  width: 250px;
-  border-right: 1px solid #ccc;
-  font-size: 14px;
-}
-
-.sidebar h3 {
-  margin-top: 0;
-}
-
-.sidebar label {
-  display: block;
-  margin: 5px 0 2px;
-}
-
-.sidebar select,
-.sidebar button {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.form-section {
-  flex: 1;
-  background-color: #fef3a4;
-  padding: 15px;
-  overflow-y: auto;
-}
-
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.tabs button {
-  padding: 5px 10px;
-  background-color: #ccc;
-  border: none;
-  cursor: pointer;
-}
-
-.tabs button.active {
-  background-color: #999;
-  color: #fff;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 10px;
-}
-
-.form-grid input,
-.form-grid select {
-  padding: 4px;
-  font-size: 14px;
-  width: 100%;
-}
-
-.bottom-buttons {
-  margin-top: 15px;
-  display: flex;
-  gap: 10px;
+textarea {
+  resize: vertical;
 }
