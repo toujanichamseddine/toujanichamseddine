@@ -1,1 +1,1 @@
-Attribute 'handler-mapping-introspector-ref' is not allowed to appear in element 'security:http'.
+nested exception is java.lang.NoClassDefFoundError: org/springframework/security/web/util/AntPathRequestMatcher
