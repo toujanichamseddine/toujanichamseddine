@@ -1,1 +1,1 @@
-cvc-enumeration-valid: Value 'mvc' is not facet-valid with respect to enumeration '[ant, regex, ciRegex]'. It must be a value from the enumeration.
+Attribute 'handler-mapping-introspector-ref' is not allowed to appear in element 'security:http'.
