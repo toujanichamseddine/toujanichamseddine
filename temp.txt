@@ -1,1 +1,89 @@
-nested exception is java.lang.NoClassDefFoundError: org/springframework/security/web/util/AntPathRequestMatcher
+✅ Let’s Debug This Step-by-Step
+🔍 Step 1: Check Effective Version
+Run this Maven command in your project root:
+
+bash
+Copier
+Modifier
+mvn dependency:tree | grep spring-security-web
+You’ll probably see 5.3.x or later, even though your pom.xml says 5.2.2. This often happens because another dependency (like spring-security-config) pulls a newer version transitively.
+
+✅ Step 2: Force the Correct Version
+In your pom.xml, explicitly lock the Spring Security versions like this:
+
+xml
+Copier
+Modifier
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-bom</artifactId>
+      <version>5.2.2.RELEASE</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+
+<dependencies>
+  <dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-web</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-config</artifactId>
+  </dependency>
+  <!-- and any others you're using -->
+</dependencies>
+Then run:
+
+bash
+Copier
+Modifier
+mvn clean install -U
+Now re-check:
+
+bash
+Copier
+Modifier
+mvn dependency:tree | grep spring-security
+You must see only 5.2.2.RELEASE.
+
+📦 Step 3: Confirm Classpath
+After building, open:
+
+bash
+Copier
+Modifier
+target/yourapp.war
+└── WEB-INF/lib/
+    └── spring-security-web-5.2.2.RELEASE.jar
+Run:
+
+bash
+Copier
+Modifier
+jar tf target/yourapp.war | grep AntPathRequestMatcher
+✅ Expected output:
+
+swift
+Copier
+Modifier
+WEB-INF/classes/org/springframework/security/web/util/AntPathRequestMatcher.class
+❌ Not:
+
+arduino
+Copier
+Modifier
+.../util/matcher/AntPathRequestMatcher.class
+🧼 Optional: Clean Local Maven Cache
+Just to be safe, clear your local cache and rebuild:
+
+bash
+Copier
+Modifier
+rm -rf ~/.m2/repository/org/springframework/security
+mvn clean install -U
+Would you like me to double-check your pom.xml if you paste it here? That would speed up finding the conflict.
