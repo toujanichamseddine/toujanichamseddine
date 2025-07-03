@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-SPM Explorer - Tirage Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 12px;
+            background-color: #f8f9fa;
+        }
+        
+        .header-bar {
+            background-color: #e9ecef;
+            border-bottom: 1px solid #dee2e6;
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+        
+        .sidebar {
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            min-height: calc(100vh - 40px);
+            padding: 10px;
+        }
+        
+        .tree-item {
+            padding: 2px 5px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .tree-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .tree-item.selected {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .main-content {
+            padding: 10px;
+        }
+        
+        .tab-content-custom {
+            border: 1px solid #dee2e6;
+            border-top: none;
+            padding: 15px;
+            background-color: white;
+        }
+        
+        .form-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+        
+        .section-title {
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            margin: -10px -10px 10px -10px;
+            font-weight: bold;
+            font-size: 11px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .form-control, .form-select {
+            font-size: 11px;
+            padding: 2px 5px;
+            height: auto;
+        }
+        
+        .btn-sm-custom {
+            padding: 2px 8px;
+            font-size: 11px;
+        }
+        
+        .table-sm-custom {
+            font-size: 10px;
+        }
+        
+        .table-sm-custom th,
+        .table-sm-custom td {
+            padding: 2px 5px;
+            vertical-align: middle;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .three-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .input-group-sm-custom .form-control,
+        .input-group-sm-custom .form-select {
+            font-size: 10px;
+            padding: 1px 3px;
+        }
+        
+        .nav-tabs .nav-link {
+            font-size: 11px;
+            padding: 5px 10px;
+        }
+        
+        .footer-buttons {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-search me-2"></i>
+            <span class="fw-bold">E-SPM Explorer</span>
+        </div>
+        <div class="d-flex gap-4">
+            <div><strong>Prêteur:</strong> <span class="text-danger">CRCAM BRIE PICARDIE (F.R.A.A)</span></div>
+            <div><strong>Stock:</strong> <span class="text-danger">CACIB cible</span></div>
+            <div><strong>Date de valeur:</strong> 30/06/2026</div>
+            <div><strong>Sujet:</strong></div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-2 sidebar">
+                <div class="tree-item">
+                    <i class="fas fa-folder-open me-1"></i> e-SPM
+                </div>
+                <div class="tree-item ms-3">
+                    <i class="fas fa-envelope me-1"></i> Enveloppe
+                </div>
+                <div class="tree-item ms-4">
+                    <i class="fas fa-folder me-1"></i> CP3007
+                </div>
+                <div class="tree-item ms-5 selected">
+                    <i class="fas fa-file me-1"></i> CP3007#001
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-10 main-content">
+                <!-- Client Info Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light border">
+                    <div><strong>Client:</strong> <span class="text-danger">COMMUNE DE MITRY MORY</span></div>
+                    <div><strong>Type de crédit:</strong> <span class="text-danger">crédit structuré (Concerto)</span></div>
+                    <div><strong>Date de maturité:</strong> 30/06/2051</div>
+                    <div><strong>Statut FO (TIR):</strong> DONE</div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light border">
+                    <div><strong>Activité:</strong> <span class="text-danger">Coll Pub And Co</span></div>
+                    <div><strong>Montant initial:</strong> <span class="text-danger">1 630 000,00</span></div>
+                    <div><strong>Sales Desk:</strong> Paris</div>
+                    <div><strong>Statut MO (TIR):</strong> MODIFIED FO</div>
+                </div>
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
+                            <i class="fas fa-info-circle me-1"></i> Détails Tirage
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="echeancier-tab" data-bs-toggle="tab" data-bs-target="#echeancier" type="button" role="tab">
+                            <i class="fas fa-calendar me-1"></i> Echéancier RP
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="valorisation-tab" data-bs-toggle="tab" data-bs-target="#valorisation" type="button" role="tab">
+                            <i class="fas fa-chart-line me-1"></i> Valorisation IRA
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                            <i class="fas fa-file-alt me-1"></i> Documents
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="middle-office-tab" data-bs-toggle="tab" data-bs-target="#middle-office" type="button" role="tab">
+                            <i class="fas fa-building me-1"></i> Documents Middle Office
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="administration-tab" data-bs-toggle="tab" data-bs-target="#administration" type="button" role="tab">
+                            <i class="fas fa-cog me-1"></i> Administration
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="historique-tab" data-bs-toggle="tab" data-bs-target="#historique" type="button" role="tab">
+                            <i class="fas fa-history me-1"></i> Historique
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content tab-content-custom" id="mainTabContent">
+                    <div class="tab-pane fade show active" id="details" role="tabpanel">
+                        <!-- Informations générales -->
+                        <div class="form-section">
+                            <div class="section-title">Informations générales</div>
+                            <div class="two-column">
+                                <div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Instruction</label>
+                                        <div class="radio-group">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="instruction" id="instr1">
+                                                <label class="form-check-label" for="instr1">OTC</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="instruction" id="instr2">
+                                                <label class="form-check-label" for="instr2">LCH</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="instruction" id="instr3">
+                                                <label class="form-check-label" for="instr3">OTC</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="instruction" id="instr4" checked>
+                                                <label class="form-check-label" for="instr4">OTC</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Suitability/Compliance</label>
+                                        <div class="radio-group">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="suitability" id="suit1">
+                                                <label class="form-check-label" for="suit1">OTC</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="suitability" id="suit2">
+                                                <label class="form-check-label" for="suit2">LCH</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="suitability" id="suit3">
+                                                <label class="form-check-label" for="suit3">OTC</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="suitability" id="suit4" checked>
+                                                <label class="form-check-label" for="suit4">OTC</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="three-column">
+                                <div>
+                                    <label class="form-label">Trade date</label>
+                                    <input type="text" class="form-control" value="20/06/2025">
+                                </div>
+                                <div>
+                                    <label class="form-label">Nominal initial</label>
+                                    <input type="text" class="form-control" value="1 630 000,00">
+                                </div>
+                                <div>
+                                    <label class="form-label">Date de départ</label>
+                                    <input type="text" class="form-control" value="30/06/2026">
+                                </div>
+                            </div>
+                            
+                            <div class="three-column mt-3">
+                                <div>
+                                    <label class="form-label">Maturité</label>
+                                    <input type="text" class="form-control" value="30/06/2051">
+                                </div>
+                                <div>
+                                    <label class="form-label">Devise</label>
+                                    <select class="form-select">
+                                        <option selected>EUR</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Type d'amortissement</label>
+                                    <select class="form-select">
+                                        <option selected>Customisé</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="three-column mt-3">
+                                <div>
+                                    <label class="form-label">Nominal moyen pondéré</label>
+                                    <input type="text" class="form-control" readonly>
+                                </div>
+                                <div>
+                                    <label class="form-label">Fréquence d'amortissement</label>
+                                    <select class="form-select">
+                                        <option selected>Customisé</option>
+                                    </select>
+                                </div>
+                                <div></div>
+                            </div>
+                        </div>
+
+                        <!-- Définition Swap -->
+                        <div class="form-section">
+                            <div class="section-title">Définition Swap</div>
+                            <div class="two-column">
+                                <div>
+                                    <h6>Jambe 1 /Ressource Prêteur</h6>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Indice de Cotation</label>
+                                            <select class="form-select">
+                                                <option selected>Euribor 3m (Euribor)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Type taux</label>
+                                            <select class="form-select">
+                                                <option selected>Fixe</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Spread de Crédit retenu</label>
+                                            <input type="text" class="form-control" value="0.61 %">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Structure</label>
+                                            <input type="text" class="form-control" value="3.63 %">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">DC Fraction</label>
+                                            <select class="form-select">
+                                                <option selected>ACT/360</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">DC Fraction</label>
+                                            <select class="form-select">
+                                                <option selected>ACT/360</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">BD Convention</label>
+                                            <select class="form-select">
+                                                <option selected>Modified Following</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">BD Convention</label>
+                                            <select class="form-select">
+                                                <option selected>Modified Following</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Adjustment Rules</label>
+                                            <select class="form-select">
+                                                <option selected>Adjusted</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Adjustment Rules</label>
+                                            <select class="form-select">
+                                                <option selected>Adjusted</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Périodicité</label>
+                                            <select class="form-select">
+                                                <option selected>Quarterly</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Périodicité</label>
+                                            <select class="form-select">
+                                                <option selected>Quarterly</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Date de Roll</label>
+                                            <input type="text" class="form-control" value="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Date de Roll</label>
+                                            <input type="text" class="form-control" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Fixing</label>
+                                            <select class="form-select">
+                                                <option selected>Pre</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Fixing</label>
+                                            <select class="form-select">
+                                                <option selected>None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Lag</label>
+                                            <input type="text" class="form-control" value="-2">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Lag</label>
+                                            <input type="text" class="form-control" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-12">
+                                            <label class="form-label">Payment</label>
+                                            <input type="text" class="form-control" value="Paris (PAR), Target (EUR)">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6>Jambe 2 /Taux payé par l'emprunteur</h6>
+                                    <div class="row mb-2">
+                                        <div class="col-12">
+                                            <label class="form-label">Payment</label>
+                                            <input type="text" class="form-control" value="Paris (PAR), Target (EUR)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description Vendeur -->
+                        <div class="form-section">
+                            <div class="section-title">Description Vendeur</div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">Sales Desk</label>
+                                    <select class="form-select">
+                                        <option selected>Paris</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Sales</label>
+                                    <select class="form-select">
+                                        <option selected>RICHA Remi</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Booking Référence -->
+                        <div class="form-section">
+                            <div class="section-title">Booking Référence</div>
+                            <table class="table table-sm table-sm-custom table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Pricer id</th>
+                                        <th>Trading book</th>
+                                        <th>Trader</th>
+                                        <th>Système front</th>
+                                        <th>Lender</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>431109...</td>
+                                        <td>BZ</td>
+                                        <td>N. Fritsch</td>
+                                        <td>OTR</td>
+                                        <td>CRCAM BRI</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="row mt-3">
+                                <div class="col-4">
+                                    <label class="form-label">IFPM</label>
+                                    <input type="text" class="form-control" readonly>
+                                </div>
+                                <div class="col-4">
+                                    <select class="form-select">
+                                        <option selected>BOETARD Jerome (ut0uwv)</option>
+                                    </select>
+                                </div>
+                                <div class="col-4"></div>
+                            </div>
+                            
+                            <div class="row mt-2">
+                                <div class="col-4">
+                                    <label class="form-label">Cat Gissler</label>
+                                    <select class="form-select">
+                                        <option selected>1A</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Risk DRF</label>
+                                    <select class="form-select">
+                                        <option selected>A</option>
+                                    </select>
+                                </div>
+                                <div class="col-4"></div>
+                            </div>
+                            
+                            <div class="mt-3 p-2 bg-light border">
+                                <strong>Import OTR Data</strong><br>
+                                <small>Last Update received at 21:47PM 20-06-2025</small>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="form-section">
+                            <div class="section-title">Actions</div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary btn-sm-custom">Ticket</button>
+                                <button class="btn btn-outline-primary btn-sm-custom">Confirmation</button>
+                                <button class="btn btn-outline-secondary btn-sm-custom">Cotation trading</button>
+                                <button class="btn btn-outline-secondary btn-sm-custom">Echéancier</button>
+                            </div>
+                        </div>
+
+                        <!-- Détails transactions -->
+                        <div class="form-section">
+                            <div class="section-title">Détails transactions</div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">NPV</label>
+                                            <input type="text" class="form-control" value="59 565,00">
+                                        </div>
+                                        <div class="col-6"></div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Bp value</label>
+                                            <input type="text" class="form-control" value="1 715,00">
+                                        </div>
+                                        <div class="col-6"></div>
+                                    </div>
+                                </div>
+                                <div class="col-6"></div>
+                            </div>
+                        </div>
+
+                        <!-- Total PNB -->
+                        <div class="form-section">
+                            <div class="section-title">Total PNB</div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="row mb-2">
+                                        <div class="col-8">
+                                            <label class="form-label">Total PNB Prêteur</label>
+                                        </div>
+                                        <div class="col-4">
+                                            <input type="text" class="form-control" value="133 337,00">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-8">
+                                            <label class="form-label">Total PNB CA-CIB</label>
+                                        </div>
+                                        <div class="col-4">
+                                            <input type="text" class="form-control" value="30 843,00">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-8">
+                                            <label class="form-label">Total PNB Groupe</label>
+                                        </div>
+                                        <div class="col-4">
+                                            <input type="text" class="form-control" value="164 180,00">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6"></div>
+                            </div>
+                        </div>
+
+                        <!-- Two Column Layout for Commentaires and Détails Structure -->
+                        <div class="two-column">
+                            <!-- Commentaires -->
+                            <div class="form-section">
+                                <div class="section-title">Commentaires</div>
+                                <textarea class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <!-- Détails Structure -->
+                            <div class="form-section">
+                                <div class="section-title">Détails Structure</div>
+                                <textarea class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Marge Prêteur and Marge CA-CIB -->
+                        <div class="two-column">
+                            <!-- Marge Prêteur -->
+                            <div class="form-section">
+                                <div class="section-title">Marge Prêteur</div>
+                                <table class="table table-sm table-sm-custom table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th></th>
+                                            <th>Devise</th>
+                                            <th>Bp running</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Rehaussement running</td>
+                                            <td>0,00</td>
+                                            <td>0,00</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rehaussement chèque</td>
+                                            <td>28 722,00</td>
+                                            <td>16,75</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Date de paiement</td>
+                                            <td>30/06/2025</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total réhaussement</td>
+                                            <td>28 722,00</td>
+                                            <td>16,75</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Marge d'Origine Prêteur</td>
+                                            <td>104 615,00</td>
+                                            <td>61,00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Marge CA-CIB -->
+                            <div class="form-section">
+                                <div class="section-title">Marge CA-CIB</div>
+                                <table class="table table-sm table-sm-custom table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th></th>
+                                            <th>Devise</th>
+                                            <th>Bp running</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Margin Net of Risk</td>
+                                            <td>28 722,00</td>
+                                            <td>16,75</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Technical Margin</td>
+                                            <td>1 071,00</td>
+                                            <td>0,62</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Credit Margin</td>
+                                            <td>1 050,00</td>
+                                            <td>0,61</td>
+                                        </tr>
+                                        <tr>
+                                            <td>IMVA</td>
+                                            <td>0,00</td>
+                                            <td>0,00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other tab contents (placeholder) -->
+                    <div class="tab-pane fade" id="echeancier" role="tabpanel">
+                        <p>Contenu de l'onglet Echéancier RP</p>
+                    </div>
+                    <div class="tab-pane fade" id="valorisation" role="tabpanel">
+                        <p>Contenu de l'onglet Valorisation IRA</p>
+                    </div>
+                    <div class="tab-pane fade" id="documents" role="tabpanel">
+                        <p>Contenu de l'onglet Documents</p>
+                    </div>
+                    <div class="tab-pane fade" id="middle-office" role="tabpanel">
+                        <p>Contenu de l'onglet Documents Middle Office</p>
+                    </div>
+                    <div class="tab-pane fade" id="administration" role="tabpanel">
+                        <p>Contenu de l'onglet Administration</p>
+                    </div>
+                    <div class="tab-pane fade" id="historique" role="tabpanel">
+                        <p>Contenu de l'onglet Historique</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="footer-buttons">
+        <button class="btn btn-outline-secondary btn-sm-custom">
+            <i class="fas fa-eye-slash me-1"></i> Hide tree
+        </button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm-custom">
+                <i class="fas fa-save me-1"></i> Save
+            </button>
+            <button class="btn btn-outline-secondary btn-sm-custom">
+                <i class="fas fa-sync-alt me-1"></i> Reload
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tree item selection
+            const treeItems = document.querySelectorAll('.tree-item');
+            treeItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    treeItems.forEach(t => t.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
+            // Form validation and interactions can be added here
+        });
+    </script>
+</body>
+</html>
+
