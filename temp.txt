@@ -1,0 +1,5 @@
+<bean id="savedRequestAwareAuthenticationSuccessHandler"
+      class="org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler">
+    <!-- Optional: where to redirect after successful authentication -->
+    <property name="defaultTargetUrl" value="/home" />
+</bean>
