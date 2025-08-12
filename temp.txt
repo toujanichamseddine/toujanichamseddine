@@ -1,86 +1,142 @@
 package com.example.rest;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
+import java.net.URI;
+import java.util.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+
+// Optional imports for SAML attribute extraction (two common APIs)
+import org.springframework.security.saml.SAMLCredential; // if using spring-security-saml (legacy)
+import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal; // if using spring-security-saml2
 
 @Path("/users")
+@Produces(MediaType.APPLICATION_JSON)
 public class UserResource {
 
+    @Context
+    private HttpServletRequest servletRequest;
+
+    @Context
+    private HttpServletResponse servletResponse;
+
+    /**
+     * Public "trigger login" endpoint — redirects the browser to the SAML entry point.
+     * Useful for browser-based flows. For pure REST clients you may want to return a 401.
+     */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getUsers() {
-        // Example: Returning a JSON string directly
-        String json = "[{\"id\":1,\"name\":\"John Doe\"},{\"id\":2,\"name\":\"Jane Smith\"}]";
-        return Response.ok(json).build();
+    @Path("/login")
+    public Response loginRedirect(@Context UriInfo uriInfo) {
+        // This path should match the SAML entry point mapped by your Spring SAML config,
+        // commonly something like "/saml/login" or "/saml/auth".
+        String loginPath = servletRequest.getContextPath() + "/saml/login";
+        URI redirectUri = URI.create(loginPath);
+        return Response.seeOther(redirectUri).build();
     }
 
+    /**
+     * Logout endpoint. It uses Spring Security logout handler to properly clear session,
+     * and then redirects to a post-logout page or returns a JSON message.
+     */
+    @POST
+    @Path("/logout")
+    public Response logout() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            new SecurityContextLogoutHandler().logout(servletRequest, servletResponse, auth);
+        }
+        // redirect to app home or return JSON
+        String home = servletRequest.getContextPath() + "/";
+        return Response.ok(Collections.singletonMap("status", "logged out")).build();
+    }
+
+    /**
+     * Returns info about currently authenticated user (SAML attributes if present).
+     */
     @GET
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getUserById(@PathParam("id") int id) {
-        String json = "{\"id\":" + id + ",\"name\":\"User " + id + "\"}";
-        return Response.ok(json).build();
+    @Path("/me")
+    public Response getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            // Not authenticated
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(Collections.singletonMap("error", "not authenticated"))
+                    .build();
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("name", auth.getName());
+        // add authorities if present
+        result.put("authorities", auth.getAuthorities() == null ? Collections.emptyList() : auth.getAuthorities());
+
+        Object principal = auth.getPrincipal();
+
+        // --- Attempt extraction for different SAML/principal implementations ---
+        try {
+            // 1) If using legacy Spring SAML (org.springframework.security.saml.SAMLCredential)
+            if (principal instanceof SAMLCredential) {
+                SAMLCredential cred = (SAMLCredential) principal;
+                Map<String, List<String>> attrs = new HashMap<>();
+
+                // iterate over assertion attributes by name (example)
+                String[] attributeNames = cred.getAttributeNames();
+                if (attributeNames != null) {
+                    for (String name : attributeNames) {
+                        String[] values = cred.getAttributeAsStringArray(name);
+                        attrs.put(name, values == null ? Collections.emptyList() : Arrays.asList(values));
+                    }
+                }
+
+                result.put("samlAttributes", attrs);
+                result.put("nameId", cred.getNameID() != null ? cred.getNameID().getValue() : null);
+            }
+            // 2) If using Spring Security SAML2 (spring-security-saml2-service-provider)
+            else if (principal instanceof Saml2AuthenticatedPrincipal) {
+                Saml2AuthenticatedPrincipal p = (Saml2AuthenticatedPrincipal) principal;
+                // attributes map is already available
+                result.put("samlAttributes", p.getAttributes());
+                // If available, included name id:
+                result.put("nameId", p.getName());
+            } else {
+                // Generic: try to find a "getAttributes" method reflectively as fallback
+                try {
+                    java.lang.reflect.Method m = principal.getClass().getMethod("getAttributes");
+                    Object attrs = m.invoke(principal);
+                    result.put("samlAttributes", attrs);
+                } catch (NoSuchMethodException ignored) {
+                    // nothing more we can do generically
+                }
+            }
+        } catch (Exception ex) {
+            // avoid propagating library-specific exceptions — just return what we have
+            result.put("samlAttributesError", ex.getMessage());
+        }
+
+        return Response.ok(result).build();
+    }
+
+    /**
+     * Example protected endpoint returning a list of users. Requires authentication.
+     */
+    @GET
+    public Response listUsers() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(Collections.singletonMap("error", "not authenticated - call /users/login to start SAML flow"))
+                    .build();
+        }
+
+        // Example content — replace with real service/DAO
+        List<Map<String,Object>> users = new ArrayList<>();
+        users.add(new HashMap<String,Object>() {{ put("id",1); put("name","John Doe"); }});
+        users.add(new HashMap<String,Object>() {{ put("id",2); put("name","Jane Smith"); }});
+        return Response.ok(users).build();
     }
 }
-
-
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="
-           http://www.springframework.org/schema/beans
-           http://www.springframework.org/schema/beans/spring-beans.xsd">
-
-    <!-- Register the REST resource as a Spring bean -->
-    <bean id="userResource" class="com.example.rest.UserResource" />
-
-</beans>
-
-<?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
-                             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
-         version="3.1">
-
-    <!-- Jersey Servlet Mapping -->
-    <servlet>
-        <servlet-name>Jersey REST Service</servlet-name>
-        <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
-        <init-param>
-            <param-name>jersey.config.server.provider.packages</param-name>
-            <param-value>com.example.rest</param-value> <!-- package with resource -->
-        </init-param>
-        <init-param>
-            <param-name>javax.ws.rs.Application</param-name>
-            <param-value>org.glassfish.jersey.server.ResourceConfig</param-value>
-        </init-param>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-
-    <!-- Map to /api/* -->
-    <servlet-mapping>
-        <servlet-name>Jersey REST Service</servlet-name>
-        <url-pattern>/api/*</url-pattern>
-    </servlet-mapping>
-
-</web-app>
-
-
-<dependency>
-    <groupId>org.glassfish.jersey.containers</groupId>
-    <artifactId>jersey-container-servlet</artifactId>
-    <version>2.41</version>
-</dependency>
-<dependency>
-    <groupId>org.glassfish.jersey.core</groupId>
-    <artifactId>jersey-server</artifactId>
-    <version>2.41</version>
-</dependency>
-<dependency>
-    <groupId>org.glassfish.jersey.media</groupId>
-    <artifactId>jersey-media-json-binding</artifactId>
-    <version>2.41</version>
-</dependency>
-
