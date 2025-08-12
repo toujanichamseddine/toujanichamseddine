@@ -1,5 +1,22 @@
-<bean id="savedRequestAwareAuthenticationSuccessHandler"
-      class="org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler">
-    <!-- Optional: where to redirect after successful authentication -->
-    <property name="defaultTargetUrl" value="/home" />
+public SAMLLogoutProcessingFilter(LogoutSuccessHandler logoutSuccessHandler,
+                                  LogoutHandler... handlers)
+
+<bean id="samlLogoutHandler"
+      class="org.springframework.security.saml.SAMLLogoutProcessingFilter">
+    <constructor-arg index="0" ref="logoutSuccessHandler"/>
+    <constructor-arg index="1">
+        <list>
+            <ref bean="securityContextLogoutHandler"/>
+        </list>
+    </constructor-arg>
+</bean>
+
+<bean id="logoutSuccessHandler"
+      class="org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler">
+    <property name="defaultTargetUrl" value="/logoutSuccess"/>
+</bean>
+
+<bean id="securityContextLogoutHandler"
+      class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler">
+    <property name="invalidateHttpSession" value="true"/>
 </bean>
