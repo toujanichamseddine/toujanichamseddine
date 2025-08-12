@@ -1,35 +1,16 @@
-<bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
-    <constructor-arg>
+<bean class="org.springframework.security.web.DefaultSecurityFilterChain">
+    <constructor-arg index="0">
+        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+            <constructor-arg value="/**"/>
+        </bean>
+    </constructor-arg>
+    <constructor-arg index="1">
         <list>
-            <!-- Specific SAML paths first -->
-            <bean class="org.springframework.security.web.DefaultSecurityFilterChain">
-                <constructor-arg index="0">
-                    <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                        <constructor-arg value="/saml/login/**"/>
-                    </bean>
-                </constructor-arg>
-                <constructor-arg index="1">
-                    <list>
-                        <ref bean="samlEntryPoint"/>
-                    </list>
-                </constructor-arg>
-            </bean>
-
-            <!-- ... all other /saml/... chains -->
-
-            <!-- Finally, the generic catch-all chain -->
-            <bean class="org.springframework.security.web.DefaultSecurityFilterChain">
-                <constructor-arg index="0">
-                    <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                        <constructor-arg value="/**"/>
-                    </bean>
-                </constructor-arg>
-                <constructor-arg index="1">
-                    <list>
-                        <ref bean="someOtherFilter"/>
-                    </list>
-                </constructor-arg>
-            </bean>
+            <!-- Example default filters -->
+            <bean class="org.springframework.security.web.context.SecurityContextPersistenceFilter" />
+            <bean class="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter" />
+            <bean class="org.springframework.security.web.access.ExceptionTranslationFilter" />
+            <bean class="org.springframework.security.web.access.intercept.FilterSecurityInterceptor" />
         </list>
     </constructor-arg>
 </bean>
