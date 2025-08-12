@@ -1,93 +1,35 @@
-    <bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
-        <constructor-arg>
-            <list>
-                <bean class="org.springframework.security.web.SecurityFilterChain">
-                    <constructor-arg name="requestMatcher">
-                        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                            <constructor-arg value="/saml/login/**"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <list>
-                            <ref bean="samlEntryPoint"/>
-                        </list>
-                    </constructor-arg>
-                </bean>
-                <bean class="org.springframework.security.web.SecurityFilterChain">
-                    <constructor-arg name="requestMatcher">
-                        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                            <constructor-arg value="/saml/logout/**"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <list>
-                            <ref bean="samlLogoutFilter"/>
-                        </list>
-                    </constructor-arg>
-                </bean>
-                <bean class="org.springframework.security.web.SecurityFilterChain">
-                    <constructor-arg name="requestMatcher">
-                        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                            <constructor-arg value="/saml/metadata/**"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <list>
-                            <ref bean="metadataDisplayFilter"/>
-                        </list>
-                    </constructor-arg>
-                </bean>
-                <bean class="org.springframework.security.web.SecurityFilterChain">
-                    <constructor-arg name="requestMatcher">
-                        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                            <constructor-arg value="/saml/SSO/**"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <list>
-                            <ref bean="samlWebSSOProcessingFilter"/>
-                        </list>
-                    </constructor-arg>
-                </bean>
-                <bean class="org.springframework.security.web.SecurityFilterChain">
-                    <constructor-arg name="requestMatcher">
-                        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                            <constructor-arg value="/saml/SSOHoK/**"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <list>
-                            <ref bean="samlWebSSOHoKProcessingFilter"/>
-                        </list>
-                    </constructor-arg>
-                </bean>
-                <bean class="org.springframework.security.web.SecurityFilterChain">
-                    <constructor-arg name="requestMatcher">
-                        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                            <constructor-arg value="/saml/SingleLogout/**"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <list>
-                            <ref bean="samlLogoutProcessingFilter"/>
-                        </list>
-                    </constructor-arg>
-                </bean>
-                <bean class="org.springframework.security.web.SecurityFilterChain">
-                    <constructor-arg name="requestMatcher">
-                        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-                            <constructor-arg value="/saml/discovery/**"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <list>
-                            <ref bean="samlIDPDiscovery"/>
-                        </list>
-                    </constructor-arg>
-                </bean>
-            </list>
-        </constructor-arg>
-    </bean>
+<bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
+    <constructor-arg>
+        <list>
+            <!-- Specific SAML paths first -->
+            <bean class="org.springframework.security.web.DefaultSecurityFilterChain">
+                <constructor-arg index="0">
+                    <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+                        <constructor-arg value="/saml/login/**"/>
+                    </bean>
+                </constructor-arg>
+                <constructor-arg index="1">
+                    <list>
+                        <ref bean="samlEntryPoint"/>
+                    </list>
+                </constructor-arg>
+            </bean>
 
+            <!-- ... all other /saml/... chains -->
 
-Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'org.springframework.security.web.SecurityFilterChain#4447776b' defined in ServletContext resource [/WEB-INF/securityContext.xml]: Could not resolve matching constructor (hint: specify index/type/name arguments for simple parameters to avoid type ambiguities)
+            <!-- Finally, the generic catch-all chain -->
+            <bean class="org.springframework.security.web.DefaultSecurityFilterChain">
+                <constructor-arg index="0">
+                    <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
+                        <constructor-arg value="/**"/>
+                    </bean>
+                </constructor-arg>
+                <constructor-arg index="1">
+                    <list>
+                        <ref bean="someOtherFilter"/>
+                    </list>
+                </constructor-arg>
+            </bean>
+        </list>
+    </constructor-arg>
+</bean>
