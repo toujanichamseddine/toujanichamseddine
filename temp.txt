@@ -11,10 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-
-// Optional imports for SAML attribute extraction (two common APIs)
-import org.springframework.security.saml.SAMLCredential; // if using spring-security-saml (legacy)
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal; // if using spring-security-saml2
+import org.springframework.security.saml.SAMLCredential;
 
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,24 +23,15 @@ public class UserResource {
     @Context
     private HttpServletResponse servletResponse;
 
-    /**
-     * Public "trigger login" endpoint — redirects the browser to the SAML entry point.
-     * Useful for browser-based flows. For pure REST clients you may want to return a 401.
-     */
+    /** Redirects browser to SAML entry point (initiates SSO). */
     @GET
     @Path("/login")
-    public Response loginRedirect(@Context UriInfo uriInfo) {
-        // This path should match the SAML entry point mapped by your Spring SAML config,
-        // commonly something like "/saml/login" or "/saml/auth".
+    public Response loginRedirect() {
         String loginPath = servletRequest.getContextPath() + "/saml/login";
-        URI redirectUri = URI.create(loginPath);
-        return Response.seeOther(redirectUri).build();
+        return Response.seeOther(URI.create(loginPath)).build();
     }
 
-    /**
-     * Logout endpoint. It uses Spring Security logout handler to properly clear session,
-     * and then redirects to a post-logout page or returns a JSON message.
-     */
+    /** POST logout — clears Spring Security context and session. */
     @POST
     @Path("/logout")
     public Response logout() {
@@ -51,89 +39,57 @@ public class UserResource {
         if (auth != null) {
             new SecurityContextLogoutHandler().logout(servletRequest, servletResponse, auth);
         }
-        // redirect to app home or return JSON
-        String home = servletRequest.getContextPath() + "/";
-        return Response.ok(Collections.singletonMap("status", "logged out")).build();
+        Map<String, String> m = Collections.singletonMap("status", "logged out");
+        return Response.ok(m).build();
     }
 
-    /**
-     * Returns info about currently authenticated user (SAML attributes if present).
-     */
+    /** Returns info about current authenticated user (SAML attributes). */
     @GET
     @Path("/me")
-    public Response getCurrentUser() {
+    public Response me() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            // Not authenticated
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(Collections.singletonMap("error", "not authenticated"))
                     .build();
         }
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("name", auth.getName());
-        // add authorities if present
-        result.put("authorities", auth.getAuthorities() == null ? Collections.emptyList() : auth.getAuthorities());
+        Map<String, Object> out = new HashMap<>();
+        out.put("name", auth.getName());
+        out.put("authorities", auth.getAuthorities());
 
         Object principal = auth.getPrincipal();
-
-        // --- Attempt extraction for different SAML/principal implementations ---
-        try {
-            // 1) If using legacy Spring SAML (org.springframework.security.saml.SAMLCredential)
-            if (principal instanceof SAMLCredential) {
-                SAMLCredential cred = (SAMLCredential) principal;
-                Map<String, List<String>> attrs = new HashMap<>();
-
-                // iterate over assertion attributes by name (example)
-                String[] attributeNames = cred.getAttributeNames();
-                if (attributeNames != null) {
-                    for (String name : attributeNames) {
-                        String[] values = cred.getAttributeAsStringArray(name);
-                        attrs.put(name, values == null ? Collections.emptyList() : Arrays.asList(values));
-                    }
-                }
-
-                result.put("samlAttributes", attrs);
-                result.put("nameId", cred.getNameID() != null ? cred.getNameID().getValue() : null);
-            }
-            // 2) If using Spring Security SAML2 (spring-security-saml2-service-provider)
-            else if (principal instanceof Saml2AuthenticatedPrincipal) {
-                Saml2AuthenticatedPrincipal p = (Saml2AuthenticatedPrincipal) principal;
-                // attributes map is already available
-                result.put("samlAttributes", p.getAttributes());
-                // If available, included name id:
-                result.put("nameId", p.getName());
-            } else {
-                // Generic: try to find a "getAttributes" method reflectively as fallback
-                try {
-                    java.lang.reflect.Method m = principal.getClass().getMethod("getAttributes");
-                    Object attrs = m.invoke(principal);
-                    result.put("samlAttributes", attrs);
-                } catch (NoSuchMethodException ignored) {
-                    // nothing more we can do generically
+        // If using spring-security-saml 1.x, principal may be SAMLCredential
+        if (principal instanceof SAMLCredential) {
+            SAMLCredential cred = (SAMLCredential) principal;
+            Map<String, List<String>> attrs = new HashMap<>();
+            String[] names = cred.getAttributeNames();
+            if (names != null) {
+                for (String n : names) {
+                    String[] vals = cred.getAttributeAsStringArray(n);
+                    attrs.put(n, vals == null ? Collections.emptyList() : Arrays.asList(vals));
                 }
             }
-        } catch (Exception ex) {
-            // avoid propagating library-specific exceptions — just return what we have
-            result.put("samlAttributesError", ex.getMessage());
+            out.put("samlAttributes", attrs);
+            out.put("nameId", cred.getNameID() != null ? cred.getNameID().getValue() : null);
+        } else {
+            // Generic fallback: show principal class
+            out.put("principalClass", principal.getClass().getName());
+            out.put("principal", principal.toString());
         }
 
-        return Response.ok(result).build();
+        return Response.ok(out).build();
     }
 
-    /**
-     * Example protected endpoint returning a list of users. Requires authentication.
-     */
+    /** Protected endpoint: list users (requires authentication). */
     @GET
     public Response listUsers() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(Collections.singletonMap("error", "not authenticated - call /users/login to start SAML flow"))
+                    .entity(Collections.singletonMap("error", "not authenticated - call /users/login"))
                     .build();
         }
-
-        // Example content — replace with real service/DAO
         List<Map<String,Object>> users = new ArrayList<>();
         users.add(new HashMap<String,Object>() {{ put("id",1); put("name","John Doe"); }});
         users.add(new HashMap<String,Object>() {{ put("id",2); put("name","Jane Smith"); }});
