@@ -1,16 +1,86 @@
-<bean class="org.springframework.security.web.DefaultSecurityFilterChain">
-    <constructor-arg index="0">
-        <bean class="org.springframework.security.web.util.matcher.AntPathRequestMatcher">
-            <constructor-arg value="/**"/>
-        </bean>
-    </constructor-arg>
-    <constructor-arg index="1">
-        <list>
-            <!-- Example default filters -->
-            <bean class="org.springframework.security.web.context.SecurityContextPersistenceFilter" />
-            <bean class="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter" />
-            <bean class="org.springframework.security.web.access.ExceptionTranslationFilter" />
-            <bean class="org.springframework.security.web.access.intercept.FilterSecurityInterceptor" />
-        </list>
-    </constructor-arg>
-</bean>
+package com.example.rest;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+@Path("/users")
+public class UserResource {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUsers() {
+        // Example: Returning a JSON string directly
+        String json = "[{\"id\":1,\"name\":\"John Doe\"},{\"id\":2,\"name\":\"Jane Smith\"}]";
+        return Response.ok(json).build();
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUserById(@PathParam("id") int id) {
+        String json = "{\"id\":" + id + ",\"name\":\"User " + id + "\"}";
+        return Response.ok(json).build();
+    }
+}
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- Register the REST resource as a Spring bean -->
+    <bean id="userResource" class="com.example.rest.UserResource" />
+
+</beans>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+
+    <!-- Jersey Servlet Mapping -->
+    <servlet>
+        <servlet-name>Jersey REST Service</servlet-name>
+        <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>jersey.config.server.provider.packages</param-name>
+            <param-value>com.example.rest</param-value> <!-- package with resource -->
+        </init-param>
+        <init-param>
+            <param-name>javax.ws.rs.Application</param-name>
+            <param-value>org.glassfish.jersey.server.ResourceConfig</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <!-- Map to /api/* -->
+    <servlet-mapping>
+        <servlet-name>Jersey REST Service</servlet-name>
+        <url-pattern>/api/*</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+
+
+<dependency>
+    <groupId>org.glassfish.jersey.containers</groupId>
+    <artifactId>jersey-container-servlet</artifactId>
+    <version>2.41</version>
+</dependency>
+<dependency>
+    <groupId>org.glassfish.jersey.core</groupId>
+    <artifactId>jersey-server</artifactId>
+    <version>2.41</version>
+</dependency>
+<dependency>
+    <groupId>org.glassfish.jersey.media</groupId>
+    <artifactId>jersey-media-json-binding</artifactId>
+    <version>2.41</version>
+</dependency>
+
