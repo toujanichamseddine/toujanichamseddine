@@ -1,98 +1,32 @@
-package com.example.rest;
+<filter>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+</filter>
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.net.URI;
-import java.util.*;
+<filter-mapping>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+<!-- Your Jersey/RESTEasy JAX-RS servlet -->
+<servlet>
+    <servlet-name>Jersey REST Service</servlet-name>
+    <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+    <init-param>
+        <param-name>jersey.config.server.provider.packages</param-name>
+        <param-value>com.example.rest</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+</servlet>
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.security.saml.SAMLCredential;
+<servlet-mapping>
+    <servlet-name>Jersey REST Service</servlet-name>
+    <url-pattern>/api/*</url-pattern>
+</servlet-mapping>
 
-@Path("/users")
-@Produces(MediaType.APPLICATION_JSON)
-public class UserResource {
+<security:http entry-point-ref="samlEntryPoint" use-expressions="true">
+    <security:intercept-url pattern="/api/**" access="hasRole('ROLE_USER')" />
+    <security:custom-filter ref="samlFilter" before="FIRST" />
+</security:http>
 
-    @Context
-    private HttpServletRequest servletRequest;
 
-    @Context
-    private HttpServletResponse servletResponse;
-
-    /** Redirects browser to SAML entry point (initiates SSO). */
-    @GET
-    @Path("/login")
-    public Response loginRedirect() {
-        String loginPath = servletRequest.getContextPath() + "/saml/login";
-        return Response.seeOther(URI.create(loginPath)).build();
-    }
-
-    /** POST logout — clears Spring Security context and session. */
-    @POST
-    @Path("/logout")
-    public Response logout() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null) {
-            new SecurityContextLogoutHandler().logout(servletRequest, servletResponse, auth);
-        }
-        Map<String, String> m = Collections.singletonMap("status", "logged out");
-        return Response.ok(m).build();
-    }
-
-    /** Returns info about current authenticated user (SAML attributes). */
-    @GET
-    @Path("/me")
-    public Response me() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(Collections.singletonMap("error", "not authenticated"))
-                    .build();
-        }
-
-        Map<String, Object> out = new HashMap<>();
-        out.put("name", auth.getName());
-        out.put("authorities", auth.getAuthorities());
-
-        Object principal = auth.getPrincipal();
-        // If using spring-security-saml 1.x, principal may be SAMLCredential
-        if (principal instanceof SAMLCredential) {
-            SAMLCredential cred = (SAMLCredential) principal;
-            Map<String, List<String>> attrs = new HashMap<>();
-            String[] names = cred.getAttributeNames();
-            if (names != null) {
-                for (String n : names) {
-                    String[] vals = cred.getAttributeAsStringArray(n);
-                    attrs.put(n, vals == null ? Collections.emptyList() : Arrays.asList(vals));
-                }
-            }
-            out.put("samlAttributes", attrs);
-            out.put("nameId", cred.getNameID() != null ? cred.getNameID().getValue() : null);
-        } else {
-            // Generic fallback: show principal class
-            out.put("principalClass", principal.getClass().getName());
-            out.put("principal", principal.toString());
-        }
-
-        return Response.ok(out).build();
-    }
-
-    /** Protected endpoint: list users (requires authentication). */
-    @GET
-    public Response listUsers() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(Collections.singletonMap("error", "not authenticated - call /users/login"))
-                    .build();
-        }
-        List<Map<String,Object>> users = new ArrayList<>();
-        users.add(new HashMap<String,Object>() {{ put("id",1); put("name","John Doe"); }});
-        users.add(new HashMap<String,Object>() {{ put("id",2); put("name","Jane Smith"); }});
-        return Response.ok(users).build();
-    }
-}
