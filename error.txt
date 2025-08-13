@@ -1,37 +1,7 @@
-javax.servlet.ServletException: org.opensaml.saml2.metadata.provider.MetadataProviderException: No IDP was configured, please update included metadata with at least one IDP
-
-    <bean id="metadataManager" class="org.springframework.security.saml.metadata.CachingMetadataManager">
-        <constructor-arg>
-            <list>
-                <!-- Métadonnées du fournisseur d'identité (IdP) -->
-                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
-                    <constructor-arg>
-                        <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider">
-                            <constructor-arg>
-                                <value type="java.io.File">${jboss.server.config.dir}/idp_metadata_SPM_INT.xml</value>
-                            </constructor-arg>
-                            <property name="parserPool" ref="parserPool"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata"/>
-                    </constructor-arg>
-                </bean>
-
-                <!-- Métadonnées du fournisseur de service (SP) -->
-                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
-                    <constructor-arg>
-                        <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider">
-                            <constructor-arg>
-                                <value type="java.io.File">${jboss.server.config.dir}/sp_metadata_SPM_INT.xml</value>
-                            </constructor-arg>
-                            <property name="parserPool" ref="parserPool"/>
-                        </bean>
-                    </constructor-arg>
-                    <constructor-arg>
-                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata"/>
-                    </constructor-arg>
-                </bean>
-            </list>
-        </constructor-arg>
+now i have have this message on my browser: /espm/WEB-INF/security/idpSelection.jsp
+could you provide me this file?
+my current config is:
+<!-- IDP Discovery Service -->
+    <bean id="samlIDPDiscovery" class="org.springframework.security.saml.SAMLDiscovery">
+        <property name="idpSelectionPath" value="/WEB-INF/security/idpSelection.jsp"/>
     </bean>
