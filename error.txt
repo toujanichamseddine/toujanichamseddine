@@ -1,1 +1,37 @@
-Error creating bean with name 'org.springframework.security.filterChainProxy': Invocation of init method failed; nested exception is java.lang.IllegalArgumentException: A universal match pattern ('/**') is defined  before other patterns in the filter chain, causing them to be ignored. Please check the ordering in your <security:http> namespace or FilterChainProxy bean configuration
+javax.servlet.ServletException: org.opensaml.saml2.metadata.provider.MetadataProviderException: No IDP was configured, please update included metadata with at least one IDP
+
+    <bean id="metadataManager" class="org.springframework.security.saml.metadata.CachingMetadataManager">
+        <constructor-arg>
+            <list>
+                <!-- Métadonnées du fournisseur d'identité (IdP) -->
+                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
+                    <constructor-arg>
+                        <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider">
+                            <constructor-arg>
+                                <value type="java.io.File">${jboss.server.config.dir}/idp_metadata_SPM_INT.xml</value>
+                            </constructor-arg>
+                            <property name="parserPool" ref="parserPool"/>
+                        </bean>
+                    </constructor-arg>
+                    <constructor-arg>
+                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata"/>
+                    </constructor-arg>
+                </bean>
+
+                <!-- Métadonnées du fournisseur de service (SP) -->
+                <bean class="org.springframework.security.saml.metadata.ExtendedMetadataDelegate">
+                    <constructor-arg>
+                        <bean class="org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider">
+                            <constructor-arg>
+                                <value type="java.io.File">${jboss.server.config.dir}/sp_metadata_SPM_INT.xml</value>
+                            </constructor-arg>
+                            <property name="parserPool" ref="parserPool"/>
+                        </bean>
+                    </constructor-arg>
+                    <constructor-arg>
+                        <bean class="org.springframework.security.saml.metadata.ExtendedMetadata"/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
