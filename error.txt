@@ -1,11 +1,11 @@
-{"WFLYCTL0080: Failed services" => {
-    "jboss.deployment.subunit.\"espm-server-4.0.ear\".\"calyon-espm-security-4.0.war\".component.\"org.springframework.http.server.reactive.ServletHttpHandlerAdapter$HandlerResultAsyncListener\".WeldInstantiator" => "Failed to start service
-    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletHttpHandlerAdapter$HandlerResultAsyncListener
-    Caused by: java.lang.NoClassDefFoundError: Failed to link org/springframework/http/server/reactive/ServletHttpHandlerAdapter$HandlerResultSubscriber (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): org/reactivestreams/Subscriber",
-    "jboss.deployment.subunit.\"espm-server-4.0.ear\".\"calyon-espm-security-4.0.war\".component.\"org.springframework.http.server.reactive.ServletServerHttpRequest$RequestAsyncListener\".WeldInstantiator" => "Failed to start service
-    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletServerHttpRequest$RequestAsyncListener
-    Caused by: java.lang.NoClassDefFoundError: Failed to link org/springframework/http/server/reactive/ServletServerHttpRequest$RequestBodyPublisher (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): Failed to link org/springframework/http/server/reactive/AbstractListenerReadPublisher (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): org/reactivestreams/Publisher",
-    "jboss.deployment.subunit.\"espm-server-4.0.ear\".\"calyon-espm-security-4.0.war\".component.\"org.springframework.http.server.reactive.ServletServerHttpResponse$ResponseAsyncListener\".WeldInstantiator" => "Failed to start service
-    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletServerHttpResponse$ResponseAsyncListener
-    Caused by: java.lang.NoClassDefFoundError: Failed to link org/springframework/http/server/reactive/ServletServerHttpResponse$ResponseBodyProcessor (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): Failed to link org/springframework/http/server/reactive/AbstractListenerWriteProcessor (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): org/reactivestreams/Processor"
-}}
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-saml2-service-provider</artifactId>
+    <version>5.2.12.RELEASE</version>
+    <exclusions>
+        <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webflux</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
