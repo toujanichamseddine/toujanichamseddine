@@ -1,7 +1,11 @@
-now i have have this message on my browser: /espm/WEB-INF/security/idpSelection.jsp
-could you provide me this file?
-my current config is:
-<!-- IDP Discovery Service -->
-    <bean id="samlIDPDiscovery" class="org.springframework.security.saml.SAMLDiscovery">
-        <property name="idpSelectionPath" value="/WEB-INF/security/idpSelection.jsp"/>
-    </bean>
+{"WFLYCTL0080: Failed services" => {
+    "jboss.deployment.subunit.\"espm-server-4.0.ear\".\"calyon-espm-security-4.0.war\".component.\"org.springframework.http.server.reactive.ServletHttpHandlerAdapter$HandlerResultAsyncListener\".WeldInstantiator" => "Failed to start service
+    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletHttpHandlerAdapter$HandlerResultAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: Failed to link org/springframework/http/server/reactive/ServletHttpHandlerAdapter$HandlerResultSubscriber (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): org/reactivestreams/Subscriber",
+    "jboss.deployment.subunit.\"espm-server-4.0.ear\".\"calyon-espm-security-4.0.war\".component.\"org.springframework.http.server.reactive.ServletServerHttpRequest$RequestAsyncListener\".WeldInstantiator" => "Failed to start service
+    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletServerHttpRequest$RequestAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: Failed to link org/springframework/http/server/reactive/ServletServerHttpRequest$RequestBodyPublisher (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): Failed to link org/springframework/http/server/reactive/AbstractListenerReadPublisher (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): org/reactivestreams/Publisher",
+    "jboss.deployment.subunit.\"espm-server-4.0.ear\".\"calyon-espm-security-4.0.war\".component.\"org.springframework.http.server.reactive.ServletServerHttpResponse$ResponseAsyncListener\".WeldInstantiator" => "Failed to start service
+    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletServerHttpResponse$ResponseAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: Failed to link org/springframework/http/server/reactive/ServletServerHttpResponse$ResponseBodyProcessor (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): Failed to link org/springframework/http/server/reactive/AbstractListenerWriteProcessor (Module \"deployment.espm-server-4.0.ear.calyon-espm-security-4.0.war\" from Service Module Loader): org/reactivestreams/Processor"
+}}
