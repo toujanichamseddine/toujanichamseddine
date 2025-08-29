@@ -1,72 +1,22 @@
-import org.opensaml.core.config.InitializationService;
-import org.opensaml.core.xml.XMLObject;
-import org.opensaml.core.xml.io.Unmarshaller;
-import org.opensaml.core.xml.io.UnmarshallerFactory;
-import org.opensaml.saml.saml2.core.*;
-import org.opensaml.xmlsec.signature.support.SignatureException;
-import org.w3c.dom.Element;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
-public class SAMLResponseParser {
-
-    // Initialize OpenSAML (must be called once at startup)
-    static {
-        try {
-            InitializationService.initialize();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize OpenSAML", e);
-        }
-    }
-
-    public static void parseSAMLResponse(String base64Response) throws Exception {
-        // 1. Base64 decode
-        byte[] decoded = Base64.getDecoder().decode(base64Response);
-        String samlXml = new String(decoded, StandardCharsets.UTF_8);
-        System.out.println("Decoded SAML XML: \n" + samlXml);
-
-        // 2. Parse XML into DOM
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        org.w3c.dom.Document document = builder.parse(new ByteArrayInputStream(decoded));
-        Element element = document.getDocumentElement();
-
-        // 3. Unmarshall into OpenSAML object
-        UnmarshallerFactory unmarshallerFactory = org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
-        Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
-        XMLObject responseXmlObj = unmarshaller.unmarshall(element);
-
-        if (responseXmlObj instanceof Response) {
-            Response response = (Response) responseXmlObj;
-
-            for (Assertion assertion : response.getAssertions()) {
-                // Extract NameID
-                if (assertion.getSubject() != null && assertion.getSubject().getNameID() != null) {
-                    String nameId = assertion.getSubject().getNameID().getValue();
-                    System.out.println("NameID: " + nameId);
-                }
-
-                // Extract Attributes
-                assertion.getAttributeStatements().forEach(attrStmt -> {
-                    attrStmt.getAttributes().forEach(attr -> {
-                        String attrName = attr.getName();
-                        attr.getAttributeValues().forEach(val -> {
-                            System.out.println("Attribute: " + attrName + " = " + val.getDOM().getTextContent());
-                        });
-                    });
-                });
-            }
-        }
-    }
-
-    // Demo
-    public static void main(String[] args) throws Exception {
-        String samlResponseEncoded = "PASTE_YOUR_SAML_BASE64_STRING_HERE";
-        parseSAMLResponse(samlResponseEncoded);
-    }
-}
+<dependencies>
+    <dependency>
+        <groupId>org.opensaml</groupId>
+        <artifactId>opensaml-core</artifactId>
+        <version>4.1.1</version>
+    </dependency>
+    <dependency>
+        <groupId>org.opensaml</groupId>
+        <artifactId>opensaml-saml-impl</artifactId>
+        <version>4.1.1</version>
+    </dependency>
+    <dependency>
+        <groupId>org.opensaml</groupId>
+        <artifactId>opensaml-xmlsec-impl</artifactId>
+        <version>4.1.1</version>
+    </dependency>
+    <dependency>
+        <groupId>org.opensaml</groupId>
+        <artifactId>opensaml-security-impl</artifactId>
+        <version>4.1.1</version>
+    </dependency>
+</dependencies>
