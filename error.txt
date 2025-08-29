@@ -1,3 +1,11 @@
-{"WFLYCTL0080: Failed services" => {"jboss.deployment.unit.\"calyon-espm-security-4.0.war\".undertow-deployment" => "java.lang.RuntimeException: java.lang.RuntimeException: RESTEASY003190: Could not find constructor for class: org.jboss.resteasy.core.AsynchronousDispatcher
-    Caused by: java.lang.RuntimeException: java.lang.RuntimeException: RESTEASY003190: Could not find constructor for class: org.jboss.resteasy.core.AsynchronousDispatcher
-    Caused by: java.lang.RuntimeException: RESTEASY003190: Could not find constructor for class: org.jboss.resteasy.core.AsynchronousDispatcher"}}
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-web>
+    <!-- This overrides the context root -->
+    <context-root>/security</context-root>
+
+    <!-- (Optional) Specify a custom virtual host -->
+    <!-- <virtual-host>default-host</virtual-host> -->
+
+    <!-- (Optional) Security domain if you use JAAS -->
+    <!-- <security-domain>other</security-domain> -->
+</jboss-web>
