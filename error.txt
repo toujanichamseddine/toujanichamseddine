@@ -1,13 +1,3 @@
-<listener>
-    <listener-class>
-        org.springframework.web.context.ContextLoaderListener
-    </listener-class>
-</listener>
-
-<!-- This points Spring to your applicationContext.xml -->
-<context-param>
-    <param-name>contextConfigLocation</param-name>
-    <param-value>/WEB-INF/applicationContext.xml</param-value>
-</context-param>
-
-
+{"WFLYCTL0080: Failed services" => {"jboss.deployment.unit.\"calyon-espm-security-4.0.war\".undertow-deployment" => "java.lang.RuntimeException: java.lang.RuntimeException: RESTEASY003190: Could not find constructor for class: org.jboss.resteasy.core.AsynchronousDispatcher
+    Caused by: java.lang.RuntimeException: java.lang.RuntimeException: RESTEASY003190: Could not find constructor for class: org.jboss.resteasy.core.AsynchronousDispatcher
+    Caused by: java.lang.RuntimeException: RESTEASY003190: Could not find constructor for class: org.jboss.resteasy.core.AsynchronousDispatcher"}}
