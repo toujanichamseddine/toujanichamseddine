@@ -1,107 +1,23 @@
-<dependencies>
-    <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-core</artifactId>
-        <version>3.4.6</version>
-    </dependency>
-    <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-saml-api</artifactId>
-        <version>3.4.6</version>
-    </dependency>
-    <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-saml-impl</artifactId>
-        <version>3.4.6</version>
-    </dependency>
-    <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-security-api</artifactId>
-        <version>3.4.6</version>
-    </dependency>
-    <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-security-impl</artifactId>
-        <version>3.4.6</version>
-    </dependency>
-    <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-xmlsec-api</artifactId>
-        <version>3.4.6</version>
-    </dependency>
-    <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-xmlsec-impl</artifactId>
-        <version>3.4.6</version>
-    </dependency>
-</dependencies>
-
-import org.opensaml.core.config.InitializationService;
-
-public class InitOpenSAML {
-    public static void main(String[] args) throws Exception {
-        InitializationService.initialize();
-        System.out.println("OpenSAML initialized!");
-    }
-}
-
-import org.opensaml.core.config.InitializationService;
-import org.opensaml.core.xml.XMLObject;
-import org.opensaml.core.xml.io.Unmarshaller;
-import org.opensaml.core.xml.io.UnmarshallerFactory;
-import org.opensaml.saml.saml2.core.Response;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Attribute;
-import org.opensaml.saml.saml2.core.AttributeStatement;
-import org.opensaml.saml.saml2.core.NameID;
-import org.w3c.dom.Element;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.zip.Inflater;
 
-public class SAMLResponseParser {
+public class SamlDecoder {
+    public static void main(String[] args) throws Exception {
+        String samlResponse = "YOUR_BASE64_STRING";
 
-    static {
-        try {
-            InitializationService.initialize();
-        } catch (Exception e) {
-            throw new RuntimeException("OpenSAML init failed", e);
-        }
-    }
+        // Step 1: Base64 decode
+        byte[] decoded = Base64.getDecoder().decode(samlResponse);
 
-    public static void parse(String base64Response) throws Exception {
-        byte[] decoded = Base64.getDecoder().decode(base64Response);
+        // Step 2: Inflate (raw DEFLATE stream, 'nowrap=true')
+        Inflater inflater = new Inflater(true);
+        inflater.setInput(decoded);
 
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        org.w3c.dom.Document document = builder.parse(new ByteArrayInputStream(decoded));
-        Element element = document.getDocumentElement();
+        byte[] buffer = new byte[10240];
+        int len = inflater.inflate(buffer);
+        inflater.end();
 
-        UnmarshallerFactory unmarshallerFactory =
-                org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
-        Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
-        XMLObject xmlObject = unmarshaller.unmarshall(element);
-
-        if (xmlObject instanceof Response) {
-            Response response = (Response) xmlObject;
-
-            for (Assertion assertion : response.getAssertions()) {
-                NameID nameID = assertion.getSubject().getNameID();
-                System.out.println("NameID: " + nameID.getValue());
-
-                for (AttributeStatement stmt : assertion.getAttributeStatements()) {
-                    for (Attribute attr : stmt.getAttributes()) {
-                        attr.getAttributeValues().forEach(val ->
-                            System.out.println("Attribute: " + attr.getName() + " = " + val.getDOM().getTextContent())
-                        );
-                    }
-                }
-            }
-        }
+        String xml = new String(buffer, 0, len, StandardCharsets.UTF_8);
+        System.out.println(xml);
     }
 }
-
