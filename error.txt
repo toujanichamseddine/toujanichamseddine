@@ -1,10 +1,67 @@
-Give me an advice, in my project I have 2 modules:
-- server: java spring backend , exposing rest web service using java.ws.rs and protected by SAML, with /espm/rest/**
-- admin: web angular project , with acess /admin
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="
+                 http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+                 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-What's should protect by SAML?
-- only /admin and i create a session to allow access for /espm/rest/** web service
-or
-- Secure /espm/rest/** and make a condition for pages on /admin to show or hide coming from backend
+    <!-- Secure REST endpoints -->
+    <http entry-point-ref="samlEntryPoint"
+          use-expressions="true"
+          create-session="never">
+        
+        <!-- Public URLs -->
+        <intercept-url pattern="/login/**" access="permitAll"/>
+        <intercept-url pattern="/logout/**" access="permitAll"/>
 
-if you have an other solution, tell me
+        <!-- Protect REST API -->
+        <intercept-url pattern="/espm/rest/**" access="isAuthenticated()"/>
+
+        <!-- Logout handling -->
+        <logout logout-url="/logout" invalidate-session="true" success-handler-ref="successLogoutHandler"/>
+        
+        <!-- Apply SAML filter chain -->
+        <custom-filter ref="metadataGeneratorFilter" before="FIRST"/>
+        <custom-filter ref="samlFilter" after="BASIC_AUTH_FILTER"/>
+    </http>
+
+    <!-- SAML Entry Point -->
+    <beans:bean id="samlEntryPoint" class="org.springframework.security.saml.SAMLEntryPoint">
+        <property name="defaultProfileOptions">
+            <beans:bean class="org.springframework.security.saml.websso.WebSSOProfileOptions">
+                <property name="includeScoping" value="false"/>
+            </beans:bean>
+        </property>
+    </beans:bean>
+
+    <!-- Authentication Provider -->
+    <authentication-manager alias="authenticationManager">
+        <authentication-provider ref="samlAuthenticationProvider"/>
+    </authentication-manager>
+
+    <beans:bean id="samlAuthenticationProvider" class="org.springframework.security.saml.SAMLAuthenticationProvider">
+        <property name="forcePrincipalAsString" value="false"/>
+        <property name="userDetails" ref="samlUserDetailsService"/>
+    </beans:bean>
+
+    <!-- Service to extract user roles -->
+    <beans:bean id="samlUserDetailsService" class="com.example.security.SAMLUserDetailsServiceImpl"/>
+
+    <!-- Success Logout Handler -->
+    <beans:bean id="successLogoutHandler" class="org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler">
+        <property name="defaultTargetUrl" value="/"/>
+    </beans:bean>
+
+    <!-- SAML Filter Chain -->
+    <beans:bean id="samlFilter" class="org.springframework.security.web.FilterChainProxy">
+        <constructor-arg>
+            <list>
+                <security:filter-chain pattern="/saml/login/**" filters="samlEntryPoint"/>
+                <security:filter-chain pattern="/saml/metadata/**" filters="metadataDisplayFilter"/>
+                <security:filter-chain pattern="/saml/SSO/**" filters="samlWebSSOProcessingFilter"/>
+                <security:filter-chain pattern="/saml/SingleLogout/**" filters="samlLogoutProcessingFilter"/>
+            </list>
+        </constructor-arg>
+    </beans:bean>
+
+</beans:beans>
