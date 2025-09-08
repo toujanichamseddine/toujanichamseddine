@@ -1,24 +1,11 @@
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.NewCookie;
-import javax.ws.rs.core.Response;
+// Get all cookies
+console.log(document.cookie);
 
-@Path("/cookie")
-public class CookieResource {
-
-    @GET
-    public Response setCookie() {
-        NewCookie cookie = new NewCookie(
-            "userToken",        // name
-            "abc123",           // value
-            "/",                // path
-            null,               // domain
-            "User session ID",  // comment
-            3600,               // max age in seconds (1h)
-            false,              // secure
-            true                // httpOnly
-        );
-
-        return Response.ok("Cookie set").cookie(cookie).build();
-    }
+// Get a specific cookie
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? match[2] : null;
 }
+
+const user = getCookie('username');
+console.log(user);
