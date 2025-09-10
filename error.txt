@@ -1,11 +1,199 @@
-// Get all cookies
-console.log(document.cookie);
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Signed out — Example</title>
 
-// Get a specific cookie
-function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : null;
+  <!-- Optional: a simple system font stack -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">MyApp</div>
+      <nav class="header-actions">
+        <a href="/login" class="link">Sign in</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main">
+    <section class="logout-card" role="region" aria-labelledby="logout-title">
+      <div class="icon-wrap" aria-hidden="true">
+        <!-- simple SVG logout/check icon -->
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="12" fill="#F8D7DA"/>
+          <path d="M15.5 11H9" stroke="#842029" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12.5 8l3 3-3 3" stroke="#842029" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <h1 id="logout-title" class="title">You’ve been signed out</h1>
+      <p class="text">You have successfully logged out. If you want to sign in again, click the button below.</p>
+
+      <div class="actions">
+        <a class="btn primary" href="/login" id="signInBtn">Sign in</a>
+        <a class="btn ghost" href="/" id="homeBtn">Back to home</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">© <span id="year"></span> MyApp</div>
+  </footer>
+
+  <script>
+    // small script to set year and prevent default navigation in demo
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Demo: if you want, you can hook buttons to JS for single-page apps
+    document.getElementById('signInBtn').addEventListener('click', function(e){
+      // In a real app, let the anchor navigate. Here we show a demo log.
+      // e.preventDefault();
+      // window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>
+
+
+:root{
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --accent:#842029; /* matches the red-ish icon color */
+  --primary:#0b62ff;
 }
 
-const user = getCookie('username');
-console.log(user);
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg,#f8fafc 0%, #eef2f6 100%);
+  color:#111827;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* layout */
+.container{
+  max-width:980px;
+  margin:0 auto;
+  padding:0 20px;
+}
+
+/* header */
+.site-header{
+  background:transparent;
+  padding:18px 0;
+}
+.header-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.logo{
+  font-weight:700;
+  color:#0f172a;
+  letter-spacing:0.2px;
+}
+.header-actions .link{
+  color:var(--muted);
+  text-decoration:none;
+  font-weight:600;
+}
+
+/* main card */
+.main{
+  min-height:calc(100vh - 160px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 0;
+}
+
+.logout-card{
+  width:100%;
+  max-width:540px;
+  background:var(--card);
+  padding:36px;
+  border-radius:12px;
+  box-shadow: 0 8px 30px rgba(16,24,40,0.08);
+  text-align:center;
+}
+
+.icon-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto 18px;
+  width:84px;
+  height:84px;
+  border-radius:50%;
+  background:linear-gradient(180deg,#fff 0,#fff0 100%);
+}
+
+.title{
+  margin:6px 0 8px;
+  font-size:20px;
+  font-weight:700;
+  color:#0f172a;
+}
+
+.text{
+  color:var(--muted);
+  margin:0 0 20px;
+  line-height:1.5;
+}
+
+/* actions */
+.actions{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+.btn{
+  display:inline-block;
+  padding:10px 16px;
+  border-radius:8px;
+  text-decoration:none;
+  font-weight:600;
+  min-width:120px;
+  text-align:center;
+  border:1px solid transparent;
+}
+
+.btn.primary{
+  background:var(--primary);
+  color:#fff;
+  box-shadow: 0 6px 18px rgba(11,98,255,0.12);
+}
+
+.btn.ghost{
+  background:transparent;
+  color:var(--muted);
+  border:1px solid #e6e9ef;
+}
+
+/* footer */
+.site-footer{
+  padding:18px 0;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+}
+
+/* responsiveness */
+@media (max-width:460px){
+  .logout-card{ padding:22px; border-radius:10px;}
+  .icon-wrap{ width:72px; height:72px}
+  .actions{ flex-direction:column; gap:10px;}
+  .btn{ width:100%; min-width:0; }
+}
