@@ -1,186 +1,85 @@
-:host {
-  display: block;
-  height: 100vh;
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-}
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { Router } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@Component({
+  selector: 'app-loading',
+  templateUrl: './loading.component.html',
+  styleUrls: ['./loading.component.css']
+})
+export class LoadingComponent implements OnInit, OnDestroy {
+  private progressValue: number = 0;
+  private progressInterval: any;
+  private redirectTimer: any;
+  private isBrowser: boolean;
 
-:host::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('https://www.credit-agricole.com/var/ca/storage/images/9/7/7/5/1585779-21-fre-FR/d80ee90271bc-le-groupe-credit-agricole_home-page_1275x566_20200825.jpg');
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.7);
-  z-index: -1;
-}
-
-:host::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(26, 42, 108, 0.8), rgba(43, 88, 118, 0.8), rgba(78, 67, 118, 0.8));
-  z-index: -1;
-}
-
-.loading-container {
-  text-align: center;
-  max-width: 600px;
-  padding: 30px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-  animation: containerFadeIn 1.5s ease-out;
-  position: relative;
-  z-index: 10;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.logo {
-  font-size: 3.5rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  background: linear-gradient(to right, #00d2ff, #3a7bd5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: fadeIn 1s ease-out;
-}
-
-.tagline {
-  font-size: 1.2rem;
-  margin-bottom: 30px;
-  color: #e0e0e0;
-  animation: fadeIn 1.5s ease-out;
-}
-
-.progress-container {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 30px 0;
-  animation: fadeIn 2s ease-out;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(to right, #00d2ff, #3a7bd5);
-  border-radius: 10px;
-  transition: width 0.3s ease;
-}
-
-.features {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 40px;
-  animation: fadeIn 2.5s ease-out;
-}
-
-.feature {
-  text-align: center;
-  padding: 15px;
-  transition: transform 0.3s;
-}
-
-.feature:hover {
-  transform: translateY(-5px);
-}
-
-.feature i {
-  font-size: 2rem;
-  margin-bottom: 10px;
-  color: #00d2ff;
-}
-
-.loading-text {
-  font-size: 1.2rem;
-  margin-top: 20px;
-  animation: pulse 1.5s infinite;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid rgba(255, 255, 255, 0.1);
-  border-top: 5px solid #00d2ff;
-  border-radius: 50%;
-  margin: 20px auto;
-  animation: spin 1s linear infinite;
-}
-
-.particles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-.particle {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  animation: float 15s infinite linear;
-}
-
-@keyframes containerFadeIn {
-  from { opacity: 0; transform: translate(-50%, -40%); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-}
-
-@keyframes float {
-  from { transform: translateY(0) rotate(0deg); opacity: 1; }
-  to { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .loading-container {
-    width: 90%;
-    padding: 20px;
+  constructor(
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
   }
-  
-  .logo {
-    font-size: 2.5rem;
+
+  ngOnInit(): void {
+    this.startProgressBar();
+    this.setupRedirect();
+    
+    if (this.isBrowser) {
+      this.createParticles();
+    }
   }
-  
-  .features {
-    flex-direction: column;
-    gap: 20px;
+
+  ngOnDestroy(): void {
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
+    if (this.redirectTimer) {
+      clearTimeout(this.redirectTimer);
+    }
+  }
+
+  startProgressBar(): void {
+    this.progressInterval = setInterval(() => {
+      this.progressValue += 1;
+      if (this.progressValue >= 100) {
+        clearInterval(this.progressInterval);
+      }
+    }, 50);
+  }
+
+  setupRedirect(): void {
+    this.redirectTimer = setTimeout(() => {
+      this.router.navigate(['/home']);
+    }, 5000);
+  }
+
+  createParticles(): void {
+    if (!this.isBrowser) return;
+    
+    const particlesContainer = document.getElementById('particles');
+    if (!particlesContainer) return;
+
+    const particlesCount = 30;
+    
+    for (let i = 0; i < particlesCount; i++) {
+      const particle = document.createElement('div');
+      particle.classList.add('particle');
+      
+      const size = Math.random() * 20 + 5;
+      const posX = Math.random() * 100;
+      const delay = Math.random() * 15;
+      
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.left = `${posX}vw`;
+      particle.style.bottom = `-${size}px`;
+      particle.style.animationDelay = `${delay}s`;
+      
+      particlesContainer.appendChild(particle);
+    }
+  }
+
+  getProgressBarWidth(): string {
+    return `${this.progressValue}%`;
   }
 }
