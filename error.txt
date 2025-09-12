@@ -1,340 +1,267 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESPM Banking - Loading</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="particles" id="particles"></div>
-    
-    <div class="loading-container">
-        <h1 class="logo">ESPM Banking</h1>
-        <p class="tagline">Secure. Innovative. Global. Your financial future starts here.</p>
-        
-        <div class="spinner"></div>
-        
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
-        
-        <p class="loading-text">Loading your financial dashboard</p>
-        
-        <div class="features">
-            <div class="feature">
-                <i class="fas fa-piggy-bank"></i>
-                <p>Smart Savings</p>
-            </div>
-            <div class="feature">
-                <i class="fas fa-chart-line"></i>
-                <p>Investment Tools</p>
-            </div>
-            <div class="feature">
-                <i class="fas fa-shield-alt"></i>
-                <p>Secure Transactions</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="home-page" id="homePage">
-        <div class="home-content">
-            <h1 class="home-title">Welcome to ESPM Banking</h1>
-            <p class="lead">Your modern financial solution for banking, investments, and wealth management.</p>
-            
-            <div class="row mt-5">
-                <div class="col-md-4">
-                    <div class="feature-box">
-                        <i class="fas fa-wallet fa-3x mb-3" style="color: #00d2ff;"></i>
-                        <h4>Digital Wallet</h4>
-                        <p>Manage all your accounts in one secure place</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-box">
-                        <i class="fas fa-chart-pie fa-3x mb-3" style="color: #00d2ff;"></i>
-                        <h4>Investment Portfolio</h4>
-                        <p>Grow your wealth with smart investment tools</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-box">
-                        <i class="fas fa-lock fa-3x mb-3" style="color: #00d2ff;"></i>
-                        <h4>Advanced Security</h4>
-                        <p>Bank with confidence with our security features</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="home-buttons">
-                <button class="btn btn-primary">Open Account</button>
-                <button class="btn btn-outline-light">Learn More</button>
-            </div>
-        </div>
-    </div>
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
+@Component({
+  selector: 'app-loading',
+  templateUrl: './loading.component.html',
+  styleUrls: ['./loading.component.css']
+})
+export class LoadingComponent implements OnInit, OnDestroy {
+  private progressValue: number = 0;
+  private progressInterval: any;
+  private redirectTimer: any;
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+  constructor(private router: Router) { }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1a2a6c, #2b5876, #4e4376);
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    overflow: hidden;
-}
+  ngOnInit(): void {
+    this.startProgressBar();
+    this.setupRedirect();
+    this.createParticles();
+  }
 
-.loading-container {
-    text-align: center;
-    max-width: 600px;
-    padding: 30px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-    animation: containerFadeIn 1.5s ease-out;
-    position: relative;
-    z-index: 10;
-}
+  ngOnDestroy(): void {
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
+    if (this.redirectTimer) {
+      clearTimeout(this.redirectTimer);
+    }
+  }
 
-.logo {
-    font-size: 3.5rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    background: linear-gradient(to right, #00d2ff, #3a7bd5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: fadeIn 1s ease-out;
-}
+  startProgressBar(): void {
+    this.progressInterval = setInterval(() => {
+      this.progressValue += 1;
+      if (this.progressValue >= 100) {
+        clearInterval(this.progressInterval);
+      }
+    }, 50);
+  }
 
-.tagline {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    color: #e0e0e0;
-    animation: fadeIn 1.5s ease-out;
-}
+  setupRedirect(): void {
+    this.redirectTimer = setTimeout(() => {
+      this.router.navigate(['/home']);
+    }, 5000);
+  }
 
-.progress-container {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 30px 0;
-    animation: fadeIn 2s ease-out;
-}
-
-.progress-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(to right, #00d2ff, #3a7bd5);
-    border-radius: 10px;
-    animation: progressAnimation 5s ease-in-out;
-}
-
-.features {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 40px;
-    animation: fadeIn 2.5s ease-out;
-}
-
-.feature {
-    text-align: center;
-    padding: 15px;
-    transition: transform 0.3s;
-}
-
-.feature:hover {
-    transform: translateY(-5px);
-}
-
-.feature i {
-    font-size: 2rem;
-    margin-bottom: 10px;
-    color: #00d2ff;
-}
-
-.loading-text {
-    font-size: 1.2rem;
-    margin-top: 20px;
-    animation: pulse 1.5s infinite;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid rgba(255, 255, 255, 0.1);
-    border-top: 5px solid #00d2ff;
-    border-radius: 50%;
-    margin: 20px auto;
-    animation: spin 1s linear infinite;
-}
-
-.particles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-}
-
-.particle {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    animation: float 15s infinite linear;
-}
-
-@keyframes containerFadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes progressAnimation {
-    0% { width: 0%; }
-    100% { width: 100%; }
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
-
-@keyframes float {
-    from { transform: translateY(0) rotate(0deg); opacity: 1; }
-    to { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-}
-
-.home-page {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #1a2a6c, #2b5876);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 1s ease, visibility 1s ease;
-    z-index: 20;
-    padding: 20px;
-    text-align: center;
-}
-
-.home-page.visible {
-    opacity: 1;
-    visibility: visible;
-}
-
-.home-content {
-    max-width: 800px;
-    padding: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-}
-
-.home-title {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-    background: linear-gradient(to right, #00d2ff, #3a7bd5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.home-buttons {
-    margin-top: 30px;
-}
-
-.btn {
-    margin: 0 10px;
-    padding: 12px 30px;
-    border-radius: 50px;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.btn-primary {
-    background: linear-gradient(to right, #00d2ff, #3a7bd5);
-    border: none;
-}
-
-.btn-outline-light:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4);
-}
-
-
-
-// Create floating particles
-function createParticles(): void {
+  createParticles(): void {
     const particlesContainer = document.getElementById('particles');
+    if (!particlesContainer) return;
+
     const particlesCount = 30;
     
     for (let i = 0; i < particlesCount; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-        
-        const size = Math.random() * 20 + 5;
-        const posX = Math.random() * 100;
-        const delay = Math.random() * 15;
-        
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${posX}vw`;
-        particle.style.bottom = `-${size}px`;
-        particle.style.animationDelay = `${delay}s`;
-        
-        if (particlesContainer) {
-            particlesContainer.appendChild(particle);
-        }
+      const particle = document.createElement('div');
+      particle.classList.add('particle');
+      
+      const size = Math.random() * 20 + 5;
+      const posX = Math.random() * 100;
+      const delay = Math.random() * 15;
+      
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.left = `${posX}vw`;
+      particle.style.bottom = `-${size}px`;
+      particle.style.animationDelay = `${delay}s`;
+      
+      particlesContainer.appendChild(particle);
     }
+  }
+
+  getProgressBarWidth(): string {
+    return `${this.progressValue}%`;
+  }
 }
 
-// Initialize the page
-document.addEventListener('DOMContentLoaded', () => {
-    createParticles();
-    
-    // Redirect to home after 5 seconds
-    setTimeout(() => {
-        const homePage = document.getElementById('homePage');
-        if (homePage) {
-            homePage.classList.add('visible');
-        }
-    }, 5000);
-});
+<div class="particles" id="particles"></div>
+
+<div class="loading-container">
+  <h1 class="logo">ESPM Banking</h1>
+  <p class="tagline">Secure. Innovative. Global. Your financial future starts here.</p>
+  
+  <div class="spinner"></div>
+  
+  <div class="progress-container">
+    <div class="progress-bar" [style.width]="getProgressBarWidth()"></div>
+  </div>
+  
+  <p class="loading-text">Loading your financial dashboard</p>
+  
+  <div class="features">
+    <div class="feature">
+      <i class="fas fa-piggy-bank"></i>
+      <p>Smart Savings</p>
+    </div>
+    <div class="feature">
+      <i class="fas fa-chart-line"></i>
+      <p>Investment Tools</p>
+    </div>
+    <div class="feature">
+      <i class="fas fa-shield-alt"></i>
+      <p>Secure Transactions</p>
+    </div>
+  </div>
+</div>
+
+
+:host {
+  display: block;
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.loading-container {
+  text-align: center;
+  max-width: 600px;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  animation: containerFadeIn 1.5s ease-out;
+  position: relative;
+  z-index: 10;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.logo {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #00d2ff, #3a7bd5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: fadeIn 1s ease-out;
+}
+
+.tagline {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  color: #e0e0e0;
+  animation: fadeIn 1.5s ease-out;
+}
+
+.progress-container {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 30px 0;
+  animation: fadeIn 2s ease-out;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(to right, #00d2ff, #3a7bd5);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.features {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 40px;
+  animation: fadeIn 2.5s ease-out;
+}
+
+.feature {
+  text-align: center;
+  padding: 15px;
+  transition: transform 0.3s;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+}
+
+.feature i {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #00d2ff;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  margin-top: 20px;
+  animation: pulse 1.5s infinite;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.1);
+  border-top: 5px solid #00d2ff;
+  border-radius: 50%;
+  margin: 20px auto;
+  animation: spin 1s linear infinite;
+}
+
+.particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: float 15s infinite linear;
+}
+
+@keyframes containerFadeIn {
+  from { opacity: 0; transform: translate(-50%, -40%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+@keyframes float {
+  from { transform: translateY(0) rotate(0deg); opacity: 1; }
+  to { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .loading-container {
+    width: 90%;
+    padding: 20px;
+  }
+  
+  .logo {
+    font-size: 2.5rem;
+  }
+  
+  .features {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
 
