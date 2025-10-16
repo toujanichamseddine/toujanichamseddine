@@ -1,85 +1,72 @@
-import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
-import { Router } from '@angular/router';
-import { isPlatformBrowser } from '@angular/common';
+<table class="table table-bordered table-hover table-sm mb-0" style="width: auto; min-width: 100%; white-space: nowrap;">
+  <thead class="table-light">
+    <tr>
+      <!-- Select All checkbox -->
+      <th>
+        <input
+          type="checkbox"
+          (change)="toggleAllRows($event)"
+          [checked]="isAllSelected"
+        />
+      </th>
 
-@Component({
-  selector: 'app-loading',
-  templateUrl: './loading.component.html',
-  styleUrls: ['./loading.component.css']
-})
-export class LoadingComponent implements OnInit, OnDestroy {
-  private progressValue: number = 0;
-  private progressInterval: any;
-  private redirectTimer: any;
-  private isBrowser: boolean;
+      <!-- Dynamic columns -->
+      <ng-container *ngFor="let col of visibleColumns; let colIndex = index">
+        <th>{{ col.header | translate }}</th>
+      </ng-container>
+    </tr>
+  </thead>
 
-  constructor(
-    private router: Router,
-    @Inject(PLATFORM_ID) private platformId: Object
-  ) {
-    this.isBrowser = isPlatformBrowser(platformId);
-  }
+  <tbody>
+    <tr
+      *ngFor="let row of visibleData; let rowIndex = index"
+      [class.table-active]="isSelected(row)"
+      (click)="onRowClick(row)"
+      (dblclick)="onRowDoubleClick(row)"
+      style="cursor: pointer;"
+    >
+      <!-- Individual row checkbox -->
+      <td>
+        <input
+          type="checkbox"
+          [(ngModel)]="row.selected"
+          (click)="$event.stopPropagation()" <!-- prevents row click event -->
+        />
+      </td>
 
-  ngOnInit(): void {
-    this.startProgressBar();
-    this.setupRedirect();
-    
-    if (this.isBrowser) {
-      this.createParticles();
-    }
-  }
+      <!-- Row content -->
+      <ng-container *ngFor="let col of visibleColumns">
+        <td>{{ row[col.field] }}</td>
+      </ng-container>
+    </tr>
+  </tbody>
+</table>
 
-  ngOnDestroy(): void {
-    if (this.progressInterval) {
-      clearInterval(this.progressInterval);
-    }
-    if (this.redirectTimer) {
-      clearTimeout(this.redirectTimer);
-    }
-  }
 
-  startProgressBar(): void {
-    this.progressInterval = setInterval(() => {
-      this.progressValue += 1;
-      if (this.progressValue >= 100) {
-        clearInterval(this.progressInterval);
-      }
-    }, 50);
-  }
 
-  setupRedirect(): void {
-    this.redirectTimer = setTimeout(() => {
-      this.router.navigate(['/home']);
-    }, 5000);
-  }
+isAllSelected = false;
+selectedRow: any = null;
 
-  createParticles(): void {
-    if (!this.isBrowser) return;
-    
-    const particlesContainer = document.getElementById('particles');
-    if (!particlesContainer) return;
+toggleAllRows(event: Event) {
+  const checked = (event.target as HTMLInputElement).checked;
+  this.isAllSelected = checked;
+  this.visibleData.forEach(row => (row.selected = checked));
+}
 
-    const particlesCount = 30;
-    
-    for (let i = 0; i < particlesCount; i++) {
-      const particle = document.createElement('div');
-      particle.classList.add('particle');
-      
-      const size = Math.random() * 20 + 5;
-      const posX = Math.random() * 100;
-      const delay = Math.random() * 15;
-      
-      particle.style.width = `${size}px`;
-      particle.style.height = `${size}px`;
-      particle.style.left = `${posX}vw`;
-      particle.style.bottom = `-${size}px`;
-      particle.style.animationDelay = `${delay}s`;
-      
-      particlesContainer.appendChild(particle);
-    }
-  }
+isSelected(row: any): boolean {
+  return this.selectedRow === row;
+}
 
-  getProgressBarWidth(): string {
-    return `${this.progressValue}%`;
-  }
+onRowClick(row: any) {
+  this.selectedRow = row;
+}
+
+onRowDoubleClick(row: any) {
+  console.log('Double clicked row:', row);
+  // You can open a modal or navigate to detail view here
+}
+
+
+tr.table-active {
+  background-color: #e6f2ff !important;
 }
