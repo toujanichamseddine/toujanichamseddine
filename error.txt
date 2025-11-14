@@ -1,5 +1,891 @@
-I exported this table from my data base for trame monitoring
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 
-a column contains an XML, parse this content to create cool charts analytics
+export interface TradeMessage {
+  NO_LOG: number;
+  DT_LOG: string;
+  CD_TYPE_STP: string;
+  TX_TRAME_STP: string;
+  BL_PROCESSED: boolean;
+  NB_ATTEMPT: number;
+  parsedXML?: ParsedXML;
+  status?: string;
+  timestamp?: Date;
+}
 
-I want a cool presentation with table , chart, xml viewer and exporter, and formatter as a dashboard with html and bootstrap
+export interface ParsedXML {
+  operation: string;
+  identifier: string;
+  type: string;
+  isinCode: string;
+  currency: string;
+  tradeAmount: number;
+  raw: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MonitoringM2TService {
+  private apiUrl = '/api/monitoring/data'; // Update with your actual API endpoint
+
+  constructor(private http: HttpClient) {}
+
+  getTradeData(): Observable<TradeMessage[]> {
+    return this.http.get<any[]>(this.apiUrl).pipe(
+      map(data => this.transformData(data))
+    );
+  }
+
+  private transformData(data: any[]): TradeMessage[] {
+    return data.map(row => ({
+      ...row,
+      parsedXML: this.parseXML(row.TX_TRAME_STP),
+      messageType: row.CD_TYPE_STP,
+      status: row.BL_PROCESSED ? 'INTEGRE' : 'ERROR',
+      timestamp: new Date(row.DT_LOG)
+    }));
+  }
+
+  private parseXML(xmlString: string): ParsedXML | null {
+    if (!xmlString?.trim()) return null;
+
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+      
+      return {
+        operation: xmlDoc.querySelector('operation')?.textContent || '',
+        identifier: xmlDoc.querySelector('identifier')?.textContent || '',
+        type: xmlDoc.querySelector('type')?.textContent || '',
+        isinCode: xmlDoc.querySelector('isin-code')?.textContent || '',
+        currency: xmlDoc.querySelector('currency')?.textContent || '',
+        tradeAmount: parseFloat(xmlDoc.querySelector('trade-amount')?.textContent || '0') || 0,
+        raw: xmlString
+      };
+    } catch (e) {
+      console.error('XML parsing error:', e);
+      return null;
+    }
+  }
+}
+
+
+
+///////////////////////////////////////////////
+monitoring-m2t.component.ts
+
+import { Component, OnInit, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { Chart, ChartConfiguration } from 'chart.js/auto';
+import { MonitoringM2TService, TradeMessage } from './monitoring-m2t.service';
+
+@Component({
+  selector: 'app-monitoring-m2t',
+  standalone: true,
+  imports: [CommonModule, HttpClientModule, ReactiveFormsModule],
+  templateUrl: './monitoring-m2t.component.html',
+  styleUrls: ['./monitoring-m2t.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class MonitoringM2TComponent implements OnInit {
+  // Signals for reactive state
+  allData = signal<TradeMessage[]>([]);
+  filteredData = signal<TradeMessage[]>([]);
+  loading = signal<boolean>(false);
+  selectedXML = signal<string>('');
+
+  // Filter form
+  filterForm = this.fb.group({
+    messageType: [''],
+    date: [''],
+    search: ['']
+  });
+
+  // Charts
+  private charts: { [key: string]: Chart } = {};
+
+  // Computed stats
+  stats = computed(() => {
+    const data = this.filteredData();
+    const total = data.length;
+    const processed = data.filter(d => d.BL_PROCESSED).length;
+    const errors = data.filter(d => !d.BL_PROCESSED).length;
+    
+    const totalAmount = data.reduce((sum, item) => sum + (item.parsedXML?.tradeAmount || 0), 0);
+    
+    return {
+      total,
+      processed,
+      errors,
+      successRate: total > 0 ? ((processed / total) * 100).toFixed(1) : 0,
+      totalAmount: this.formatCurrency(totalAmount),
+      avgResponse: '0.5s' // Simplified
+    };
+  });
+
+  // Unique filter options
+  messageTypes = computed(() => {
+    const types = new Set(this.allData().map(d => d.CD_TYPE_STP).filter(Boolean));
+    return Array.from(types);
+  });
+
+  // XML selector options
+  xmlOptions = computed(() => 
+    this.filteredData().slice(0, 100).map((item, index) => ({
+      value: index,
+      label: `${item.NO_LOG} - ${item.parsedXML?.identifier || 'Unknown'}`
+    }))
+  );
+
+  constructor(
+    private service: MonitoringM2TService,
+    private fb: FormBuilder
+  ) {
+    // Auto-apply filters when form changes
+    effect(() => {
+      this.filterForm.valueChanges.subscribe(() => this.applyFilters());
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  loadData(): void {
+    this.loading.set(true);
+    
+    this.service.getTradeData().subscribe({
+      next: (data) => {
+        this.allData.set(data);
+        this.filteredData.set(data);
+        this.initializeCharts();
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load data:', err);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  private initializeCharts(): void {
+    // Message Types Chart
+    this.createBarChart('messageTypeChart', {
+      labels: [],
+      datasets: [{
+        label: 'Message Count',
+        data: [],
+        backgroundColor: '#3b82f6',
+        borderRadius: 6
+      }]
+    });
+
+    // Status Chart
+    this.createDoughnutChart('statusChart', {
+      labels: [],
+      datasets: [{
+        data: [],
+        backgroundColor: ['#3b82f6', '#ef4444', '#f59e0b', '#10b981']
+      }]
+    });
+
+    // Timeline Chart
+    this.createLineChart('timelineChart', {
+      labels: [],
+      datasets: [{
+        label: 'Messages per Hour',
+        data: [],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    });
+
+    // Deal Type Chart
+    this.createPieChart('dealTypeChart', {
+      labels: [],
+      datasets: [{
+        data: [],
+        backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b']
+      }]
+    });
+
+    this.updateCharts();
+  }
+
+  private createBarChart(id: string, data: any): void {
+    const ctx = document.getElementById(id) as HTMLCanvasElement;
+    this.charts[id] = new Chart(ctx, {
+      type: 'bar',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  private createDoughnutChart(id: string, data: any): void {
+    const ctx = document.getElementById(id) as HTMLCanvasElement;
+    this.charts[id] = new Chart(ctx, {
+      type: 'doughnut',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right' } }
+      }
+    });
+  }
+
+  private createLineChart(id: string, data: any): void {
+    const ctx = document.getElementById(id) as HTMLCanvasElement;
+    this.charts[id] = new Chart(ctx, {
+      type: 'line',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  private createPieChart(id: string, data: any): void {
+    const ctx = document.getElementById(id) as HTMLCanvasElement;
+    this.charts[id] = new Chart(ctx, {
+      type: 'pie',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  updateCharts(): void {
+    const data = this.filteredData();
+    
+    // Update Message Types
+    const messageTypes = this.groupBy(data, d => d.CD_TYPE_STP);
+    this.updateChart('messageTypeChart', Object.keys(messageTypes), Object.values(messageTypes));
+
+    // Update Status
+    const status = this.groupBy(data, d => d.status || 'UNKNOWN');
+    this.updateChart('statusChart', Object.keys(status), Object.values(status));
+
+    // Update Timeline
+    const timeline = this.groupByHour(data);
+    const hours = Array.from({length: 24}, (_, i) => i);
+    this.updateChart('timelineChart', hours.map(h => `${h}:00`), hours.map(h => timeline[h] || 0));
+
+    // Update Deal Types
+    const dealTypes = this.groupBy(data, d => d.parsedXML?.type || 'Unknown');
+    this.updateChart('dealTypeChart', Object.keys(dealTypes), Object.values(dealTypes));
+  }
+
+  private updateChart(id: string, labels: string[], data: number[]): void {
+    const chart = this.charts[id];
+    if (chart) {
+      chart.data.labels = labels;
+      if (id === 'statusChart' || id === 'dealTypeChart') {
+        chart.data.datasets[0].data = data;
+      } else {
+        chart.data.datasets[0].data = data;
+      }
+      chart.update('active');
+    }
+  }
+
+  private groupBy(data: any[], keyFn: (item: any) => string): Record<string, number> {
+    return data.reduce((acc, item) => {
+      const key = keyFn(item) || 'Unknown';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }
+
+  private groupByHour(data: TradeMessage[]): Record<number, number> {
+    return data.reduce((acc, item) => {
+      const hour = item.timestamp?.getHours() ?? 0;
+      acc[hour] = (acc[hour] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
+  }
+
+  applyFilters(): void {
+    const { messageType, date, search } = this.filterForm.value;
+    const searchLower = search?.toLowerCase() || '';
+
+    const filtered = this.allData().filter(item => {
+      const matchesType = !messageType || item.CD_TYPE_STP === messageType;
+      const matchesDate = !date || item.timestamp?.toDateString() === new Date(date).toDateString();
+      const matchesSearch = !searchLower || 
+        item.TX_TRAME_STP.toLowerCase().includes(searchLower) ||
+        item.parsedXML?.identifier?.toLowerCase().includes(searchLower);
+
+      return matchesType && matchesDate && matchesSearch;
+    });
+
+    this.filteredData.set(filtered);
+    this.updateCharts();
+  }
+
+  resetFilters(): void {
+    this.filterForm.reset({
+      messageType: '',
+      date: '',
+      search: ''
+    });
+  }
+
+  formatDate(date: Date): string {
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  formatCurrency(amount: number): string {
+    if (amount >= 1_000_000) return `€${(amount / 1_000_000).toFixed(1)}M`;
+    if (amount >= 1_000) return `€${(amount / 1_000).toFixed(1)}K`;
+    return `€${amount.toFixed(0)}`;
+  }
+
+  getStatusBadge(status: string): string {
+    const badges: Record<string, string> = {
+      'INTEGRE': 'success',
+      'ERROR': 'danger',
+      'PROCESSING': 'warning',
+      'PENDING': 'info'
+    };
+    const badgeClass = badges[status] || 'secondary';
+    return `<span class="badge bg-${badgeClass}">${status}</span>`;
+  }
+
+  showXMLDetails(item: TradeMessage): void {
+    this.selectedXML.set(item.TX_TRAME_STP);
+  }
+
+  formatXML(xmlString: string): string {
+    // XML formatting with syntax highlighting
+    let formatted = '';
+    const reg = /(>)(<)(\/?\s*)/g;
+    xmlString = xmlString.replace(reg, '$1\r\n$2$3');
+    let pad = 0;
+
+    xmlString.split('\r\n').forEach(node => {
+      let indent = 0;
+      if (node.match(/.+<\/\w[^>]*>$/)) {
+        indent = 0;
+      } else if (node.match(/^<\/\w/)) {
+        if (pad !== 0) pad -= 1;
+      } else if (node.match(/^<\w[^>]*[^\/]>.*$/)) {
+        indent = 1;
+      } else {
+        indent = 0;
+      }
+
+      const padding = '  '.repeat(pad);
+      if (node.trim() !== '') {
+        formatted += this.highlightXML(padding + node) + '\r\n';
+      }
+      pad += indent;
+    });
+
+    return formatted;
+  }
+
+  private highlightXML(xmlLine: string): string {
+    return xmlLine
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/&lt;(\/?)([\w-:]+)([\s\S]*?)&gt;/g, 
+        '<span class="xml-element">&lt;$1$2$3&gt;</span>')
+      .replace(/([\w-:]+)=["']([^"']+)["']/g, 
+        '<span class="xml-attribute">$1</span>=<span class="xml-value">"$2"</span>');
+  }
+
+  exportToCSV(): void {
+    const headers = ['NO_LOG', 'DT_LOG', 'CD_TYPE_STP', 'IDENTIFIER', 'STATUS', 'AMOUNT', 'CURRENCY'];
+    const csvContent = [
+      headers.join(','),
+      ...this.filteredData().map(row => [
+        row.NO_LOG,
+        row.DT_LOG,
+        row.CD_TYPE_STP,
+        row.parsedXML?.identifier || '',
+        row.status || '',
+        row.parsedXML?.tradeAmount || 0,
+        row.parsedXML?.currency || ''
+      ].join(','))
+    ].join('\n');
+
+    this.downloadFile(csvContent, 'trade-messages.csv', 'text/csv');
+  }
+
+  exportToJSON(): void {
+    const jsonData = this.filteredData().map(row => ({
+      id: row.NO_LOG,
+      timestamp: row.DT_LOG,
+      messageType: row.CD_TYPE_STP,
+      identifier: row.parsedXML?.identifier,
+      status: row.status,
+      amount: row.parsedXML?.tradeAmount,
+      currency: row.parsedXML?.currency,
+      xml: row.TX_TRAME_STP
+    }));
+
+    this.downloadFile(JSON.stringify(jsonData, null, 2), 'trade-messages.json', 'application/json');
+  }
+
+  private downloadFile(content: string, filename: string, contentType: string): void {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  refreshData(): void {
+    this.loadData();
+  }
+}
+
+////////////////////////////////////////////////////
+<div class="monitoring-container">
+  <!-- Loading Spinner -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h4 class="mt-3">Processing Data...</h4>
+    </div>
+  }
+
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="container">
+      <h1 class="mb-0">
+        <i class="fas fa-chart-line me-3"></i>Trade Monitoring Analytics Dashboard
+      </h1>
+      <p class="mb-0 mt-2">Real-time XML Trade Data Analysis & Visualization</p>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container-fluid py-4">
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="stats-label mb-1">Total Messages</p>
+              <h2 class="stats-number">{{ stats().total | number }}</h2>
+            </div>
+            <i class="fas fa-envelope fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="stats-label mb-1">Processed</p>
+              <h2 class="stats-number">{{ stats().processed | number }}</h2>
+            </div>
+            <i class="fas fa-check-circle fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="stats-label mb-1">Success Rate</p>
+              <h2 class="stats-number">{{ stats().successRate }}%</h2>
+            </div>
+            <i class="fas fa-percentage fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="stats-label mb-1">Total Amount</p>
+              <h2 class="stats-number">{{ stats().totalAmount }}</h2>
+            </div>
+            <i class="fas fa-euro-sign fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="stats-label mb-1">Avg Response</p>
+              <h2 class="stats-number">{{ stats().avgResponse }}</h2>
+            </div>
+            <i class="fas fa-clock fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2 col-sm-6 mb-3">
+        <div class="stats-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <p class="stats-label mb-1">Errors</p>
+              <h2 class="stats-number">{{ stats().errors | number }}</h2>
+            </div>
+            <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+        <div class="row align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Message Type</label>
+            <select class="form-select" formControlName="messageType">
+              <option value="">All Types</option>
+              @for (type of messageTypes(); track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Date Range</label>
+            <input type="date" class="form-control" formControlName="date">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Search</label>
+            <input type="text" class="form-control" formControlName="search" placeholder="Search in XML...">
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary btn-export me-2">
+              <i class="fas fa-filter me-2"></i>Apply Filters
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="resetFilters()">
+              <i class="fas fa-undo me-2"></i>Reset
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header">
+            <i class="fas fa-chart-bar"></i> Message Types Distribution
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="messageTypeChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header">
+            <i class="fas fa-chart-pie"></i> Processing Status
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header">
+            <i class="fas fa-chart-line"></i> Messages Over Time
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="timelineChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header">
+            <i class="fas fa-chart-area"></i> Deal Types Distribution
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="dealTypeChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table & XML Viewer -->
+    <div class="row mb-4">
+      <!-- Table -->
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-table"></i> Trade Messages</span>
+            <div>
+              <button class="btn btn-sm btn-export me-2" (click)="exportToCSV()">
+                <i class="fas fa-file-csv me-1"></i>CSV
+              </button>
+              <button class="btn btn-sm btn-export me-2" (click)="exportToJSON()">
+                <i class="fas fa-file-code me-1"></i>JSON
+              </button>
+              <button class="btn btn-sm btn-export" (click)="refreshData()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+              </button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Timestamp</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Deal ID</th>
+                  <th>Amount</th>
+                  <th>Currency</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of filteredData(); track item.NO_LOG) {
+                  <tr (click)="showXMLDetails(item)" class="cursor-pointer">
+                    <td>{{ item.NO_LOG }}</td>
+                    <td>{{ formatDate(item.timestamp!) }}</td>
+                    <td><span class="badge bg-info">{{ item.CD_TYPE_STP }}</span></td>
+                    <td [innerHTML]="getStatusBadge(item.status!)"></td>
+                    <td><strong>{{ item.parsedXML?.identifier }}</strong></td>
+                    <td class="text-end">{{ formatCurrency(item.parsedXML?.tradeAmount || 0) }}</td>
+                    <td>{{ item.parsedXML?.currency }}</td>
+                    <td>
+                      <button class="btn btn-sm btn-primary" (click)="$event.stopPropagation(); showXMLDetails(item)">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- XML Viewer -->
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <i class="fas fa-code"></i> XML Viewer
+          </div>
+          <div class="card-body d-flex flex-column">
+            <div class="mb-3">
+              <select class="form-select" (change)="onXMLSelect($event)">
+                <option value="">Select a message to view XML...</option>
+                @for (option of xmlOptions(); track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="xml-viewer flex-grow-1">
+              @if (selectedXML()) {
+                <div [innerHTML]="formatXML(selectedXML())"></div>
+              } @else {
+                <p class="text-muted">Select a message from the table to view its XML content.</p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+//////////////////////////////////////////////////////////////////////////:
+
+:host {
+  --primary-color: #0d1b2a;
+  --secondary-color: #1b263b;
+  --accent-color: #415a77;
+  --highlight-color: #778da9;
+  --light-bg: #e0e1dd;
+  --text-color: #0d1b2a;
+}
+
+.dashboard-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+}
+
+.stats-card {
+  background: linear-gradient(135deg, var(--accent-color), var(--highlight-color));
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  height: 100%;
+}
+
+.stats-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0;
+  line-height: 1;
+}
+
+.stats-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  padding: 1rem;
+}
+
+.table-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+
+.xml-viewer {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.xml-element { color: #9cdcfe; }
+.xml-attribute { color: #d7ba7d; }
+.xml-value { color: #ce9178; }
+
+.btn-export {
+  background: linear-gradient(135deg, var(--accent-color), var(--highlight-color));
+  border: none;
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(13, 27, 42, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  color: white;
+  backdrop-filter: blur(5px);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 250px;
+  }
+}
+
+
+//////////////////////////////////////////////
+
+5. Configuration & Usage
+app.config.ts (provide HttpClient):
+TypeScript
+Copy
+import { ApplicationConfig } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideAnimations } from '@angular/platform-browser/animations';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(),
+    provideAnimations()
+  ]
+};
+main.ts:
+TypeScript
+Copy
+import { bootstrapApplication } from '@angular/platform-browser';
+import { appConfig } from './app/app.config';
+import { MonitoringM2TComponent } from './app/monitoring-m2t/monitoring-m2t.component';
+
+bootstrapApplication(MonitoringM2TComponent, appConfig)
+  .catch(err => console.error(err));
+Install dependencies:
+bash
+Copy
+npm install chart.js bootstrap @fortawesome/fontawesome-free
+Update angular.json to include styles:
+JSON
+Copy
+"styles": [
+  "node_modules/bootstrap/dist/css/bootstrap.min.css",
+  "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+  "src/styles.scss"
+]
+
+
+
+
+
