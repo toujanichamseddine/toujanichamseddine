@@ -1,19 +1,21 @@
-<build>
-  <plugins>
-    <plugin>
-      <artifactId>maven-jar-plugin</artifactId>
-      <executions>
-        <execution>
-          <id>create-jar</id>
-          <phase>package</phase>
-          <goals>
-            <goal>jar</goal>
-          </goals>
-          <configuration>
-            <classifier>classes</classifier>
-          </configuration>
-        </execution>
-      </executions>
-    </plugin>
-    </plugins>
-</build>
+ERROR ReferenceError: document is not defined
+    at Object._document (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-4ZU4K7JO.js:1049:15)
+    at Object.factory (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3553:32)
+    at eval (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3474:35)
+    at runInInjectorProfilerContext (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:2076:5)
+    at R3Injector.hydrate (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3473:11)
+    at R3Injector.get (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3363:23)
+    at R3Injector.get (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3368:27)
+    at injectInjectorOnly (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:2208:36)
+    at ɵɵinject (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:2214:59)
+21:20:36 [vite] Internal server error: document is not defined
+      at Object._document (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-4ZU4K7JO.js:1049:15)
+      at Object.factory (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3553:32)
+      at eval (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3474:35)
+      at runInInjectorProfilerContext (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:2076:5)
+      at R3Injector.hydrate (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3473:11)
+      at R3Injector.get (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3363:23)
+      at R3Injector.get (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:3368:27)
+      at injectInjectorOnly (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:2208:36)
+      at ɵɵinject (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:2214:59)
+      at injectArgs (C:\Users\UT3WCD\My_IT_Applications\projects\Angular\ESPM_AS\calyon-espm-web-admin\.angular\cache\18.2.14\calyon-espm-web-admin\vite\deps_ssr\chunk-P4YKTSCY.js:2257:17) (x3)
